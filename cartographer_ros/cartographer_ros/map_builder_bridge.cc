@@ -575,7 +575,6 @@ nav_msgs::Path MapBuilderBridge::GetGlobalNodePoses(bool only_active_and_connect
     }
   }
 
-  int seq = 0;
   nav_msgs::Path global_node_poses;
   global_node_poses.header.stamp = ::ros::Time(0);
   global_node_poses.header.frame_id = node_options_.map_frame;
@@ -586,7 +585,7 @@ nav_msgs::Path MapBuilderBridge::GetGlobalNodePoses(bool only_active_and_connect
         ::cartographer::common::Time time = node_id_pose.data.constant_pose_data->time;
         Rigid3d pose = node_id_pose.data.global_pose;
         geometry_msgs::PoseStamped ros_pose;
-        ros_pose.header.seq = seq;
+        ros_pose.header.seq = trajectory_id;
         ros_pose.header.stamp = ToRos(time);
         ros_pose.header.frame_id = trajectory_options_.at(trajectory_id).tracking_frame;
         ros_pose.pose = ToGeometryMsgPose(pose);
@@ -594,7 +593,6 @@ nav_msgs::Path MapBuilderBridge::GetGlobalNodePoses(bool only_active_and_connect
         if (ros_pose.header.stamp > global_node_poses.header.stamp) {
           global_node_poses.header.stamp = ros_pose.header.stamp;
         }
-        seq++;
       }
     }
   }
