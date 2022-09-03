@@ -361,8 +361,7 @@ void Node::PublishLocalTrajectoryData(const ::ros::TimerEvent& timer_event) {
   nav_msgs::PathPtr optimized_node_poses =
       map_builder_bridge_.GetOptimizedNodePosesIfChanged(&last_optimized_node_poses_counter_);
   if (optimized_node_poses) {
-    if (optimized_node_poses->header.stamp == ::ros::Time(0) &&
-        last_published_tf_stamps_.size() > 0) {
+    if (last_published_tf_stamps_.size() > 0) {
       for (const auto& entry : last_published_tf_stamps_) {
         if (optimized_node_poses->header.stamp < entry.second) {
           optimized_node_poses->header.stamp = entry.second;

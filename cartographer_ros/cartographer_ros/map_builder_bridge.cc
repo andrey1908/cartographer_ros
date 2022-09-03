@@ -551,6 +551,24 @@ visualization_msgs::MarkerArray MapBuilderBridge::GetConstraintList() {
 }
 
 nav_msgs::Path MapBuilderBridge::GetGlobalNodePoses(bool only_active_and_connected_trajectories) {
+  const auto node_poses = map_builder_->pose_graph()->GetTrajectoryNodePoses();
+  std::set<int> trajectory_ids;
+  std::map<int, ::cartographer::common::Time> latest_node_time_in_trajectory;
+  ::cartographer::common::Time latest_node_time;
+  for (const auto& node_id_data : node_poses) {
+    int trajectory_id = node_id_data.id.trajectory_id;
+    trajectory_ids.insert(trajectory_id);
+    if (node_id_data.data.constant_pose_data.has_value()) {
+      ::cartographer::common::Time time = node_id_data.data.constant_pose_data->time;
+      if (latest_node_time_in_trajectory.count(trajectory_id) == 0) {
+        latest_node_time_in_trajectory[trajectory_id] = time;
+      } else {
+        latest_node_time_in_trajectory.at(trajectory_id) = std::max(latest_node_time_in_trajectory.at(trajectory_id), time);
+      }
+      latest_node_time = std::max(latest_node_time, time);
+    }
+  }
+
   std::set<int> trajectories_to_use;
   if (only_active_and_connected_trajectories) {
     const auto& trajectory_states = map_builder_->pose_graph()->GetTrajectoryStates();
@@ -559,31 +577,34 @@ nav_msgs::Path MapBuilderBridge::GetGlobalNodePoses(bool only_active_and_connect
         trajectories_to_use.insert(trajectory_id_state.first);
       }
     }
+
+    auto global_constraint_search_after_n_seconds =
+        ::cartographer::common::FromSeconds(node_options_.map_builder_options.pose_graph_options().global_constraint_search_after_n_seconds());
     for (const auto& trajectory_id_state : trajectory_states) {
       const int trajectory_id = trajectory_id_state.first;
       for (int trajectory_in_use : trajectories_to_use) {
-        if (map_builder_->pose_graph()->TrajectoriesTransitivelyConnected(trajectory_id, trajectory_in_use)) {
+        if (map_builder_->pose_graph()->TrajectoriesTransitivelyConnected(trajectory_id, trajectory_in_use) &&
+            map_builder_->pose_graph()->TrajectoriesLastConnectionTime(trajectory_id, trajectory_in_use) +
+                global_constraint_search_after_n_seconds >
+                std::max(latest_node_time_in_trajectory.at(trajectory_id),
+                         latest_node_time_in_trajectory.at(trajectory_in_use))) {
           trajectories_to_use.insert(trajectory_id);
           break;
         }
       }
     }
   } else {
-    const auto& trajectory_states = map_builder_->pose_graph()->GetTrajectoryStates();
-    for (const auto& trajectory_id_state : trajectory_states) {
-      trajectories_to_use.insert(trajectory_id_state.first);
-    }
+    trajectories_to_use = trajectory_ids;
   }
 
   nav_msgs::Path global_node_poses;
-  global_node_poses.header.stamp = ::ros::Time(0);
+  global_node_poses.header.stamp = ToRos(latest_node_time);
   global_node_poses.header.frame_id = node_options_.map_frame;
-  const auto node_poses = map_builder_->pose_graph()->GetTrajectoryNodePoses();
   for (const auto& trajectory_id : trajectories_to_use) {
-    for (const auto& node_id_pose : node_poses.trajectory(trajectory_id)) {
-      if (node_id_pose.data.constant_pose_data.has_value()) {
-        ::cartographer::common::Time time = node_id_pose.data.constant_pose_data->time;
-        Rigid3d pose = node_id_pose.data.global_pose;
+    for (const auto& node_id_data : node_poses.trajectory(trajectory_id)) {
+      if (node_id_data.data.constant_pose_data.has_value()) {
+        ::cartographer::common::Time time = node_id_data.data.constant_pose_data->time;
+        Rigid3d pose = node_id_data.data.global_pose;
         geometry_msgs::PoseStamped ros_pose;
         ros_pose.header.seq = trajectory_id;
         ros_pose.header.stamp = ToRos(time);
