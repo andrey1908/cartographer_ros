@@ -586,8 +586,8 @@ nav_msgs::Path MapBuilderBridge::GetGlobalNodePoses(bool only_active_and_connect
         if (map_builder_->pose_graph()->TrajectoriesTransitivelyConnected(trajectory_id, trajectory_in_use) &&
             map_builder_->pose_graph()->TrajectoriesLastConnectionTime(trajectory_id, trajectory_in_use) +
                 global_constraint_search_after_n_seconds >
-                std::max(latest_node_time_in_trajectory.at(trajectory_id),
-                         latest_node_time_in_trajectory.at(trajectory_in_use))) {
+                std::max(latest_node_time_in_trajectory[trajectory_id],
+                         latest_node_time_in_trajectory[trajectory_in_use])) {
           trajectories_to_use.insert(trajectory_id);
           break;
         }
