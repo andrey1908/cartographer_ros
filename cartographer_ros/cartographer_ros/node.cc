@@ -416,9 +416,9 @@ Node::ComputeExpectedSensorIds(const TrajectoryOptions& options) const {
        ComputeRepeatedTopicNames(kPointCloud2Topic, options.num_point_clouds)) {
     expected_topics.insert(SensorId{SensorType::RANGE, topic});
   }
-  // For 2D SLAM, subscribe to the IMU if we expect it. For 3D SLAM, the IMU is
-  // required.
-  if (node_options_.map_builder_options.use_trajectory_builder_3d() ||
+  if ((node_options_.map_builder_options.use_trajectory_builder_3d() &&
+       options.trajectory_builder_options.trajectory_builder_3d_options()
+           .use_imu_data()) ||
       (node_options_.map_builder_options.use_trajectory_builder_2d() &&
        options.trajectory_builder_options.trajectory_builder_2d_options()
            .use_imu_data())) {
@@ -484,10 +484,9 @@ void Node::LaunchSubscribers(const TrajectoryOptions& options,
              &node_handle_, this, &ros_time_measurer),
          topic});
   }
-
-  // For 2D SLAM, subscribe to the IMU if we expect it. For 3D SLAM, the IMU is
-  // required.
-  if (node_options_.map_builder_options.use_trajectory_builder_3d() ||
+  if ((node_options_.map_builder_options.use_trajectory_builder_3d() &&
+       options.trajectory_builder_options.trajectory_builder_3d_options()
+           .use_imu_data()) ||
       (node_options_.map_builder_options.use_trajectory_builder_2d() &&
        options.trajectory_builder_options.trajectory_builder_2d_options()
            .use_imu_data())) {
