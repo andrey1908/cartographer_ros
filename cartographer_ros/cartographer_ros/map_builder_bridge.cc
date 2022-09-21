@@ -104,7 +104,7 @@ MapBuilderBridge::MapBuilderBridge(
     std::unique_ptr<cartographer::mapping::MapBuilderInterface> map_builder,
     tf2_ros::Buffer* const tf_buffer)
     : node_options_(node_options),
-      optimized_node_poses_counter_(0),
+      only_active_and_connected_trajectories_for_optimized_node_poses_(true),
       map_builder_(std::move(map_builder)),
       tf_buffer_(tf_buffer) {
   map_builder_->pose_graph()->SetGlobalSlamOptimizationCallback(
@@ -112,7 +112,6 @@ MapBuilderBridge::MapBuilderBridge(
              const std::map<int, cartographer::mapping::NodeId>&) {
         OnGlobalSlamOptimization();
       });
-  optimized_node_poses_.header.stamp = ::ros::Time(0);
 }
 
 void MapBuilderBridge::LoadState(const std::string& state_filename,
@@ -620,31 +619,16 @@ nav_msgs::Path MapBuilderBridge::GetGlobalNodePoses(bool only_active_and_connect
   return global_node_poses;
 }
 
-nav_msgs::Path MapBuilderBridge::GetOptimizedNodePoses() {
-  nav_msgs::Path optimized_node_poses;
-  {
-    absl::MutexLock lock(&mutex_);
-    optimized_node_poses = optimized_node_poses_;
-  }
-  return optimized_node_poses;
+void MapBuilderBridge::SetOptimizedNodePosesCallback(OptimizedNodePosesCallback optimized_node_poses_callback) {
+  absl::MutexLock lock(&optimized_node_poses_mutex_);
+  optimized_node_poses_callback_ = optimized_node_poses_callback;
 }
 
-int MapBuilderBridge::GetOptimizedNodePosesCounter() {
-  absl::MutexLock lock(&mutex_);
-  return optimized_node_poses_counter_;
-}
-
-nav_msgs::PathPtr MapBuilderBridge::GetOptimizedNodePosesIfChanged(int* optimized_node_poses_counter) {
-  nav_msgs::PathPtr optimized_node_poses;
-  {
-    absl::MutexLock lock(&mutex_);
-    if (*optimized_node_poses_counter == optimized_node_poses_counter_) {
-      return optimized_node_poses;
-    }
-    optimized_node_poses.reset(new nav_msgs::Path(optimized_node_poses_));
-    *optimized_node_poses_counter = optimized_node_poses_counter_;
-  }
-  return optimized_node_poses;
+void MapBuilderBridge::OnlyActiveAndConnectedTrajectoriesForOptimizedNodePoses(
+    bool only_active_and_connected_trajectories_for_optimized_node_poses) {
+  absl::MutexLock lock(&optimized_node_poses_mutex_);
+  only_active_and_connected_trajectories_for_optimized_node_poses_ =
+      only_active_and_connected_trajectories_for_optimized_node_poses;
 }
 
 SensorBridge* MapBuilderBridge::sensor_bridge(const int trajectory_id) {
@@ -664,10 +648,12 @@ void MapBuilderBridge::OnLocalSlamResult(
 }
 
 void MapBuilderBridge::OnGlobalSlamOptimization() {
-  nav_msgs::Path optimized_node_poses = GetGlobalNodePoses(true);
-  absl::MutexLock lock(&mutex_);
-  optimized_node_poses_ = std::move(optimized_node_poses);
-  optimized_node_poses_counter_++;
+  absl::MutexLock lock(&optimized_node_poses_mutex_);
+  if (optimized_node_poses_callback_) {
+    nav_msgs::Path optimized_node_poses =
+        GetGlobalNodePoses(only_active_and_connected_trajectories_for_optimized_node_poses_);
+    optimized_node_poses_callback_(optimized_node_poses);
+  }
 }
 
 }  // namespace cartographer_ros

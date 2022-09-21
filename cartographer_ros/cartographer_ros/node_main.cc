@@ -22,6 +22,9 @@
 #include "gflags/gflags.h"
 #include "tf2_ros/transform_listener.h"
 
+#include <csignal>
+#include <functional>
+
 DEFINE_bool(collect_metrics, false,
             "Activates the collection of runtime metrics. If activated, the "
             "metrics can be accessed via a ROS service.");
@@ -41,6 +44,13 @@ DEFINE_string(
 
 namespace cartographer_ros {
 namespace {
+
+std::function<void()> OnShutDown;
+
+void SigIntHandler(int signal){
+  OnShutDown();
+  ::ros::shutdown();
+}
 
 void Run() {
   constexpr double kTfBufferCacheTimeInSeconds = 10.;
@@ -64,15 +74,17 @@ void Run() {
     node.StartTrajectoryWithDefaultTopics(trajectory_options);
   }
 
+  OnShutDown = [&node](){
+    node.FinishAllTrajectories();
+    node.RunFinalOptimization();
+    if (!FLAGS_save_state_filename.empty()) {
+      node.SerializeState(FLAGS_save_state_filename,
+                          true /* include_unfinished_submaps */);
+    }
+  };
+  std::signal(SIGINT, SigIntHandler);
+
   ::ros::spin();
-
-  node.FinishAllTrajectories();
-  node.RunFinalOptimization();
-
-  if (!FLAGS_save_state_filename.empty()) {
-    node.SerializeState(FLAGS_save_state_filename,
-                        true /* include_unfinished_submaps */);
-  }
 }
 
 }  // namespace
@@ -85,7 +97,7 @@ int main(int argc, char** argv) {
   CHECK(!FLAGS_configuration_filename.empty())
       << "-configuration_filename is missing.";
 
-  ::ros::init(argc, argv, "cartographer_node");
+  ::ros::init(argc, argv, "cartographer_node", ros::init_options::NoSigintHandler);
   ::ros::start();
 
   cartographer_ros::ScopedRosLogSink ros_log_sink;

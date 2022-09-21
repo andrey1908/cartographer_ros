@@ -43,6 +43,7 @@
 #include "cartographer_ros_msgs/SubmapQuery.h"
 #include "cartographer_ros_msgs/WriteState.h"
 #include "nav_msgs/Odometry.h"
+#include "nav_msgs/Path.h"
 #include "ros/ros.h"
 #include "sensor_msgs/Imu.h"
 #include "sensor_msgs/LaserScan.h"
@@ -160,6 +161,7 @@ class Node {
   void AddExtrapolator(int trajectory_id, const TrajectoryOptions& options);
   void AddSensorSamplers(int trajectory_id, const TrajectoryOptions& options);
   void PublishLocalTrajectoryData(const ::ros::TimerEvent& timer_event);
+  void PublishOptimizedNodePoses(const nav_msgs::Path& optimized_node_poses);
   void PublishTrajectoryNodeList(const ::ros::WallTimerEvent& timer_event);
   void PublishLandmarkPosesList(const ::ros::WallTimerEvent& timer_event);
   void PublishConstraintList(const ::ros::WallTimerEvent& timer_event);
