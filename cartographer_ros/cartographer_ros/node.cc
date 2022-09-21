@@ -364,7 +364,17 @@ void Node::PublishLocalTrajectoryData(const ::ros::TimerEvent& timer_event) {
   }
 }
 
-void Node::PublishOptimizedNodePoses(const nav_msgs::Path& optimized_node_poses) {
+void Node::PublishOptimizedNodePoses(nav_msgs::Path optimized_node_poses) {
+  {
+    absl::MutexLock lock(&mutex_);
+    if (last_published_tf_stamps_.size() > 0) {
+      for (const auto& entry : last_published_tf_stamps_) {
+        if (optimized_node_poses.header.stamp < entry.second) {
+          optimized_node_poses.header.stamp = entry.second;
+        }
+      }
+    }
+  }
   optimized_node_poses_publisher_.publish(optimized_node_poses);
 }
 
