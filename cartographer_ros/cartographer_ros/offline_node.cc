@@ -49,6 +49,9 @@ DEFINE_string(
     bag_filenames, "",
     "Comma-separated list of bags to process. One bag per trajectory. "
     "Any combination of simultaneous and sequential bags is supported.");
+DEFINE_bool(create_new_trajectory_for_each_rosbag, true, "Create "
+    "a new trajectory for each rosbag. Otherwise all rosbags are processed in "
+    "one trajectory.");
 DEFINE_string(urdf_filenames, "",
               "Comma-separated list of one or more URDF files that contain "
               "static links for the sensor configuration(s).");
@@ -274,6 +277,7 @@ void RunOfflineNode(const MapBuilderFactory& map_builder_factory) {
           ? playable_bag_multiplexer.PeekMessageTime()
           : ros::Time();
   bool first_message = true;
+  size_t bags_processed = 0;
   while (playable_bag_multiplexer.IsMessageAvailable()) {
     if (!::ros::ok()) {
       return;
@@ -299,9 +303,13 @@ void RunOfflineNode(const MapBuilderFactory& map_builder_factory) {
     // Lazily add trajectories only when the first message arrives in order
     // to avoid blocking the sensor queue.
     if (bag_index_to_trajectory_id.count(bag_index) == 0) {
-      trajectory_id =
-          node.AddOfflineTrajectory(bag_expected_sensor_ids.at(bag_index),
-                                    bag_trajectory_options.at(bag_index));
+      if (FLAGS_create_new_trajectory_for_each_rosbag || bag_index_to_trajectory_id.size() == 0) {
+        trajectory_id =
+            node.AddOfflineTrajectory(bag_expected_sensor_ids.at(bag_index),
+                                      bag_trajectory_options.at(bag_index));
+      } else {
+        trajectory_id = bag_index_to_trajectory_id.begin()->second;
+      }
       CHECK(bag_index_to_trajectory_id
                 .emplace(std::piecewise_construct,
                          std::forward_as_tuple(bag_index),
@@ -356,7 +364,10 @@ void RunOfflineNode(const MapBuilderFactory& map_builder_factory) {
     }
 
     if (is_last_message_in_bag) {
-      node.FinishTrajectory(trajectory_id);
+      bags_processed++;
+      if (FLAGS_create_new_trajectory_for_each_rosbag || bags_processed == bag_filenames.size()) {
+        node.FinishTrajectory(trajectory_id);
+      }
     }
   }
 
