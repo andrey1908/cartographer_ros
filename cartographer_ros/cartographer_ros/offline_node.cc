@@ -83,10 +83,10 @@ constexpr char kClockTopic[] = "/clock";
 constexpr char kTfStaticTopic[] = "/tf_static";
 constexpr double kClockPublishFrequencySec = 1. / 30.;
 constexpr int kSingleThreaded = 1;
-// We publish tf messages one second earlier than other messages. Under
+// We publish tf messages one second earlier than other messages (disabled). Under
 // the assumption of higher frequency tf this should ensure that tf can
 // always interpolate.
-const ::ros::Duration kDelay = ::ros::Duration(-1);
+const ::ros::Duration kDelay = ::ros::Duration(-1);  // do not use delay
 
 void RunOfflineNode(const MapBuilderFactory& map_builder_factory) {
   CHECK(!FLAGS_configuration_filenames.empty())
