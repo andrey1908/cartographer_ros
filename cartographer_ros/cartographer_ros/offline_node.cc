@@ -57,7 +57,7 @@ DEFINE_string(urdf_filenames, "",
               "static links for the sensor configuration(s).");
 DEFINE_bool(use_bag_transforms, true,
             "Whether to read and use transforms from bags.");
-DEFINE_bool(read_transforms_from_topics, true,
+DEFINE_bool(read_transforms_from_tf, true,
             "Read transforms from /tf and /tf_static.");
 DEFINE_string(load_state_filename, "",
               "If non-empty, filename of a .pbstream file to load, containing "
@@ -143,7 +143,7 @@ void RunOfflineNode(const MapBuilderFactory& map_builder_factory) {
   }
 
   std::unique_ptr<tf2_ros::TransformListener> tf_listener_ptr;
-  if (FLAGS_read_transforms_from_topics) {
+  if (FLAGS_read_transforms_from_tf) {
     tf_listener_ptr.reset(new tf2_ros::TransformListener(tf_buffer));
     ros::WallDuration(0.5).sleep();
   } else {
