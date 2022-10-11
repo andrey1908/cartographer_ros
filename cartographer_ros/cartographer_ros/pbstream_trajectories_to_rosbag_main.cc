@@ -13,7 +13,8 @@
 
 DEFINE_string(input, "", "pbstream file to process");
 DEFINE_string(output, "", "output bag file");
-DEFINE_string(parent_frame, "map", "frame id to use as parent frame");
+DEFINE_string(global_parent_frame, "map", "frame id to use as parent frame for global poses");
+DEFINE_string(local_parent_frame, "odom", "frame id to use as parent frame for local poses");
 DEFINE_string(tracking_frame, "", "frame id to use as child frame");
 
 namespace cartographer_ros {
@@ -39,7 +40,9 @@ geometry_msgs::TransformStamped to_transform_stamped(
 
 void pbstream_trajectories_to_rosbag(const std::string& pbstream_filename,
                                   const std::string& output_bag_filename,
-                                  const std::string& parent_frame, const std::string& tracking_frame) {
+                                  const std::string& global_parent_frame,
+                                  const std::string& local_parent_frame,
+                                  const std::string& tracking_frame) {
   // open map
   cartographer::io::ProtoStreamReader map_reader(pbstream_filename);
   cartographer::io::ProtoStreamDeserializer map_deserializer(&map_reader);
@@ -51,8 +54,8 @@ void pbstream_trajectories_to_rosbag(const std::string& pbstream_filename,
   const cartographer::mapping::proto::PoseGraph& pose_graph = map_deserializer.pose_graph();
   for (const auto trajectory : pose_graph.trajectory()) {
     for (const auto& node : trajectory.node()) {
-      std::string topic = std::string("global_trajectory_") + std::to_string(trajectory.trajectory_id());
-      const auto& transform_stamped = to_transform_stamped(node.timestamp(), parent_frame, tracking_frame, node.pose());
+      std::string topic = std::string("/global_trajectory_") + std::to_string(trajectory.trajectory_id());
+      const auto& transform_stamped = to_transform_stamped(node.timestamp(), global_parent_frame, tracking_frame, node.pose());
       bag.write(topic, transform_stamped.header.stamp, transform_stamped);
     }
   }
@@ -63,8 +66,8 @@ void pbstream_trajectories_to_rosbag(const std::string& pbstream_filename,
   while (read_ok) {
     if (data.data_case() == NODE_DATA) {
       auto node_data = data.node().node_data();
-      std::string topic = std::string("local_trajectory_") + std::to_string(data.node().node_id().trajectory_id());
-      const auto& transform_stamped = to_transform_stamped(node_data.timestamp(), parent_frame, tracking_frame, node_data.local_pose());
+      std::string topic = std::string("/local_trajectory_") + std::to_string(data.node().node_id().trajectory_id());
+      const auto& transform_stamped = to_transform_stamped(node_data.timestamp(), local_parent_frame, tracking_frame, node_data.local_pose());
       bag.write(topic, transform_stamped.header.stamp, transform_stamped);
     }
     read_ok = map_deserializer.ReadNextSerializedData(&data);
@@ -86,6 +89,8 @@ int main(int argc, char* argv[]) {
   CHECK(!FLAGS_tracking_frame.empty()) << "-tracking_frame is missing.";
 
   cartographer_ros::pbstream_trajectories_to_rosbag(FLAGS_input, FLAGS_output,
-                                                    FLAGS_parent_frame, FLAGS_tracking_frame);
+                                                    FLAGS_global_parent_frame,
+                                                    FLAGS_local_parent_frame,
+                                                    FLAGS_tracking_frame);
   return 0;
 }
