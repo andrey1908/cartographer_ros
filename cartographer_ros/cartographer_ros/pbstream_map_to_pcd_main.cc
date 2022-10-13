@@ -18,7 +18,7 @@
 
 DEFINE_string(input, "", "pbstream file to process");
 DEFINE_string(output, "", "output pcd file");
-DEFINE_bool(use_global_poses, false, "if global (optimized) poses are used");
+DEFINE_bool(use_global_poses, true, "use global (optimized) poses");
 DEFINE_string(point_cloud_name, "low_resolution", "which point cloud to use: filtered_gravity_aligned, high_resolution or low_resolution");
 
 namespace cartographer_ros {
