@@ -124,7 +124,16 @@ void RunOfflineNode(const MapBuilderFactory& map_builder_factory) {
   // remaining sensor data that cannot be transformed due to missing transforms.
   node_options.lookup_transform_timeout_sec = 0.;
 
-  auto map_builder = map_builder_factory(node_options.map_builder_options);
+  int num_range_data_2d = 0;
+  int num_range_data_3d = 0;
+  if (configuration_filenames.size() == 1) {
+    num_range_data_2d =
+        bag_trajectory_options.at(0).trajectory_builder_options.trajectory_builder_2d_options().submaps_options().num_range_data();
+    num_range_data_3d =
+        bag_trajectory_options.at(0).trajectory_builder_options.trajectory_builder_3d_options().submaps_options().num_range_data();
+  }
+  auto map_builder = map_builder_factory(node_options.map_builder_options,
+      num_range_data_2d, num_range_data_3d);
 
   const std::chrono::time_point<std::chrono::steady_clock> start_time =
       std::chrono::steady_clock::now();

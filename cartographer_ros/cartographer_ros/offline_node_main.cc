@@ -31,8 +31,9 @@ int main(int argc, char** argv) {
 
   const cartographer_ros::MapBuilderFactory map_builder_factory = [](
       const ::cartographer::mapping::proto::MapBuilderOptions&
-          map_builder_options) {
-    return ::cartographer::mapping::CreateMapBuilder(map_builder_options);
+          map_builder_options, int num_range_data_2d, int num_range_data_3d) {
+    return ::cartographer::mapping::CreateMapBuilder(map_builder_options,
+        num_range_data_2d, num_range_data_3d);
   };
 
   cartographer_ros::RunOfflineNode(map_builder_factory);
