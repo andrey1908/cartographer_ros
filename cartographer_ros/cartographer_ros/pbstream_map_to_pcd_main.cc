@@ -18,7 +18,7 @@
 
 DEFINE_string(input, "", "pbstream file to process");
 DEFINE_string(output, "", "output pcd file");
-DEFINE_bool(use_global_poses, true, "use global (optimized) poses");
+DEFINE_bool(use_local_poses, false, "use local (odometry) poses");
 DEFINE_string(point_cloud_name, "low_resolution", "which point cloud to use: filtered_gravity_aligned, high_resolution or low_resolution");
 
 namespace cartographer_ros {
@@ -42,7 +42,7 @@ NodePoses get_global_node_poses(const cartographer::mapping::proto::PoseGraph& p
 
 void pbstream_map_to_pcd(const std::string& pbstream_filename,
                          const std::string& output_pcd_filename,
-                         const bool& use_global_poses,
+                         const bool& use_local_poses,
                          const std::string& point_cloud_name) {
   std::set<std::string> avaliable_point_cloud_names = {"filtered_gravity_aligned", "high_resolution", "low_resolution"};
   CHECK(avaliable_point_cloud_names.find(point_cloud_name) != avaliable_point_cloud_names.end());
@@ -76,11 +76,11 @@ void pbstream_map_to_pcd(const std::string& pbstream_filename,
       cartographer::sensor::CompressedPointCloud compressed_point_cloud(proto_point_cloud);
       cartographer::sensor::PointCloud point_cloud(compressed_point_cloud.Decompress());
       cartographer::transform::Rigid3f node_pose;
-      if (use_global_poses) {
+      if (use_local_poses) {
+        node_pose = cartographer::transform::ToRigid3(node_data.local_pose()).cast<float>();
+      } else {
         cartographer::mapping::NodeId node_id(data.node().node_id().trajectory_id(), data.node().node_id().node_index());
         node_pose = global_node_poses.at(node_id);
-      } else {
-        node_pose = cartographer::transform::ToRigid3(node_data.local_pose()).cast<float>();
       }
       point_cloud = cartographer::sensor::TransformPointCloud(point_cloud, node_pose);
       auto points_batch = std::make_unique<cartographer::io::PointsBatch>();
@@ -102,6 +102,6 @@ int main(int argc, char* argv[]) {
   CHECK(!FLAGS_input.empty()) << "-input pbstream is missing.";
   CHECK(!FLAGS_output.empty()) << "-output is missing.";
 
-  cartographer_ros::pbstream_map_to_pcd(FLAGS_input, FLAGS_output, FLAGS_use_global_poses, FLAGS_point_cloud_name);
+  cartographer_ros::pbstream_map_to_pcd(FLAGS_input, FLAGS_output, FLAGS_use_local_poses, FLAGS_point_cloud_name);
   return 0;
 }
