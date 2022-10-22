@@ -173,6 +173,7 @@ Node::Node(
       ::ros::WallDuration(kConstraintPublishPeriodSec),
       &Node::PublishConstraintList, this));
 
+  map_builder_bridge_.OnlyActiveAndConnectedTrajectoriesForOptimizedNodePosesCallback(true);
   map_builder_bridge_.SetOptimizedNodePosesCallback(
       [this](const nav_msgs::Path& optimized_node_poses) {
         PublishOptimizedNodePoses(optimized_node_poses);
@@ -810,7 +811,7 @@ void Node::RunFinalOptimization() {
   }
   // Assuming we are not adding new data anymore, the final optimization
   // can be performed without holding the mutex.
-  map_builder_bridge_.OnlyActiveAndConnectedTrajectoriesForOptimizedNodePoses(false);
+  map_builder_bridge_.OnlyActiveAndConnectedTrajectoriesForOptimizedNodePosesCallback(false);
   map_builder_bridge_.RunFinalOptimization();
 }
 

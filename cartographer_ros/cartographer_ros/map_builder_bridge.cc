@@ -104,7 +104,7 @@ MapBuilderBridge::MapBuilderBridge(
     std::unique_ptr<cartographer::mapping::MapBuilderInterface> map_builder,
     tf2_ros::Buffer* const tf_buffer)
     : node_options_(node_options),
-      only_active_and_connected_trajectories_for_optimized_node_poses_(true),
+      only_active_and_connected_trajectories_for_optimized_node_poses_callback_(true),
       map_builder_(std::move(map_builder)),
       tf_buffer_(tf_buffer) {
   map_builder_->pose_graph()->SetGlobalSlamOptimizationCallback(
@@ -620,15 +620,15 @@ nav_msgs::Path MapBuilderBridge::GetGlobalNodePoses(bool only_active_and_connect
 }
 
 void MapBuilderBridge::SetOptimizedNodePosesCallback(OptimizedNodePosesCallback optimized_node_poses_callback) {
-  absl::MutexLock lock(&optimized_node_poses_mutex_);
+  absl::MutexLock lock(&optimized_node_poses_callback_mutex_);
   optimized_node_poses_callback_ = optimized_node_poses_callback;
 }
 
-void MapBuilderBridge::OnlyActiveAndConnectedTrajectoriesForOptimizedNodePoses(
-    bool only_active_and_connected_trajectories_for_optimized_node_poses) {
-  absl::MutexLock lock(&optimized_node_poses_mutex_);
-  only_active_and_connected_trajectories_for_optimized_node_poses_ =
-      only_active_and_connected_trajectories_for_optimized_node_poses;
+void MapBuilderBridge::OnlyActiveAndConnectedTrajectoriesForOptimizedNodePosesCallback(
+    bool only_active_and_connected_trajectories_for_optimized_node_poses_callback) {
+  absl::MutexLock lock(&optimized_node_poses_callback_mutex_);
+  only_active_and_connected_trajectories_for_optimized_node_poses_callback_ =
+      only_active_and_connected_trajectories_for_optimized_node_poses_callback;
 }
 
 SensorBridge* MapBuilderBridge::sensor_bridge(const int trajectory_id) {
@@ -648,10 +648,10 @@ void MapBuilderBridge::OnLocalSlamResult(
 }
 
 void MapBuilderBridge::OnGlobalSlamOptimization() {
-  absl::MutexLock lock(&optimized_node_poses_mutex_);
+  absl::MutexLock lock(&optimized_node_poses_callback_mutex_);
   if (optimized_node_poses_callback_) {
     nav_msgs::Path optimized_node_poses =
-        GetGlobalNodePoses(only_active_and_connected_trajectories_for_optimized_node_poses_);
+        GetGlobalNodePoses(only_active_and_connected_trajectories_for_optimized_node_poses_callback_);
     optimized_node_poses_callback_(optimized_node_poses);
   }
 }

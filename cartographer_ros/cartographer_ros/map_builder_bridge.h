@@ -105,9 +105,9 @@ class MapBuilderBridge {
   visualization_msgs::MarkerArray GetConstraintList();
   nav_msgs::Path GetGlobalNodePoses(bool only_active_and_connected_trajectories);
   void SetOptimizedNodePosesCallback(
-      OptimizedNodePosesCallback optimized_node_poses_callback) LOCKS_EXCLUDED(optimized_node_poses_mutex_);
-  void OnlyActiveAndConnectedTrajectoriesForOptimizedNodePoses(
-      bool only_active_and_connected_trajectories_for_optimized_node_poses) LOCKS_EXCLUDED(optimized_node_poses_mutex_);
+      OptimizedNodePosesCallback optimized_node_poses_callback) LOCKS_EXCLUDED(optimized_node_poses_callback_mutex_);
+  void OnlyActiveAndConnectedTrajectoriesForOptimizedNodePosesCallback(
+      bool only_active_and_connected_trajectories_for_optimized_node_poses_callback) LOCKS_EXCLUDED(optimized_node_poses_callback_mutex_);
 
   SensorBridge* sensor_bridge(int trajectory_id);
 
@@ -126,9 +126,9 @@ class MapBuilderBridge {
                      std::shared_ptr<const LocalTrajectoryData::LocalSlamData>>
       local_slam_data_ GUARDED_BY(mutex_);
 
-  absl::Mutex optimized_node_poses_mutex_;
-  OptimizedNodePosesCallback optimized_node_poses_callback_ GUARDED_BY(optimized_node_poses_mutex_);
-  bool only_active_and_connected_trajectories_for_optimized_node_poses_ GUARDED_BY(optimized_node_poses_mutex_);
+  absl::Mutex optimized_node_poses_callback_mutex_;
+  OptimizedNodePosesCallback optimized_node_poses_callback_ GUARDED_BY(optimized_node_poses_callback_mutex_);
+  bool only_active_and_connected_trajectories_for_optimized_node_poses_callback_ GUARDED_BY(optimized_node_poses_callback_mutex_);
 
   std::map<int, std::unique_ptr<::cartographer::transform::Rigid3d>> published_to_tracking_cache_;
   std::unique_ptr<cartographer::mapping::MapBuilderInterface> map_builder_;
