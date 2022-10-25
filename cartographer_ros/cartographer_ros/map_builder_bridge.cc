@@ -652,11 +652,11 @@ void MapBuilderBridge::CacheOptimizationResults() {
   absl::MutexLock lock(&mutex_);
   optimization_results_.node_poses = std::move(node_poses);
   if (active_trajectory_id != -1) {
-    optimization_results_.odometry_correction = map_builder_->pose_graph()->GetLocalToGlobalTransform(active_trajectory_id);
-    optimization_results_.odom_frame = trajectory_options_.at(active_trajectory_id).odom_frame;
+    optimization_results_.active_trajectory_local_to_map = map_builder_->pose_graph()->GetLocalToGlobalTransform(active_trajectory_id);
+    optimization_results_.active_trajectory_odom_frame = trajectory_options_.at(active_trajectory_id).odom_frame;
   } else {
-    optimization_results_.odometry_correction.reset();
-    optimization_results_.odom_frame.clear();
+    optimization_results_.active_trajectory_local_to_map.reset();
+    optimization_results_.active_trajectory_odom_frame.clear();
   }
 }
 

@@ -68,8 +68,8 @@ class MapBuilderBridge {
   struct OptimizationResults {
     ::cartographer::mapping::MapById<::cartographer::mapping::NodeId, ::cartographer::mapping::TrajectoryNodePose>
         node_poses;
-    absl::optional<::cartographer::transform::Rigid3d> odometry_correction;
-    std::string odom_frame;
+    absl::optional<::cartographer::transform::Rigid3d> active_trajectory_local_to_map;
+    std::string active_trajectory_odom_frame;
   };
 
   using OptimizedNodePosesCallback = std::function<void(const nav_msgs::Path&)>;

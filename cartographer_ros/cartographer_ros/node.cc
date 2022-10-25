@@ -378,12 +378,12 @@ void Node::PublishLocalTrajectoryData(const ::ros::TimerEvent& timer_event) {
       pose.header.stamp = ToRos(node_id_data.data.constant_pose_data->time);
       pose.child_frame_id = map_builder_bridge_.GetTrajectoryTrackingFrame(node_id_data.id.trajectory_id);
       pose.transform = ToGeometryMsgTransform(node_id_data.data.global_pose);
-      optimization_results_msg.trajectories[trajectory_id_to_optimized_trajectory.at(node_id_data.id.trajectory_id)].poses.push_back(pose);
+      optimization_results_msg.trajectories[trajectory_id_to_optimized_trajectory.at(node_id_data.id.trajectory_id)].global_poses.push_back(pose);
     }
-    if (optimization_results.odometry_correction.has_value()) {
-      optimization_results_msg.odometry_correction.header.frame_id = node_options_.map_frame;
-      optimization_results_msg.odometry_correction.child_frame_id = optimization_results.odom_frame;
-      optimization_results_msg.odometry_correction.transform = ToGeometryMsgTransform(*optimization_results.odometry_correction);
+    if (optimization_results.active_trajectory_local_to_map.has_value()) {
+      optimization_results_msg.map_to_odom.header.frame_id = node_options_.map_frame;
+      optimization_results_msg.map_to_odom.child_frame_id = optimization_results.active_trajectory_odom_frame;
+      optimization_results_msg.map_to_odom.transform = ToGeometryMsgTransform(*optimization_results.active_trajectory_local_to_map);
     }
     last_published_optimization_results_stamp_ = optimization_results_stamp;
     optimization_results_publisher_.publish(optimization_results_msg);
