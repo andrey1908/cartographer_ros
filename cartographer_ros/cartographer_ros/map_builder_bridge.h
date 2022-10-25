@@ -65,6 +65,13 @@ class MapBuilderBridge {
     TrajectoryOptions trajectory_options;
   };
 
+  struct OptimizationResults {
+    ::cartographer::mapping::MapById<::cartographer::mapping::NodeId, ::cartographer::mapping::TrajectoryNodePose>
+        node_poses;
+    absl::optional<::cartographer::transform::Rigid3d> odometry_correction;
+    std::string odom_frame;
+  };
+
   using OptimizedNodePosesCallback = std::function<void(const nav_msgs::Path&)>;
 
   MapBuilderBridge(
@@ -103,11 +110,11 @@ class MapBuilderBridge {
   visualization_msgs::MarkerArray GetTrajectoryNodeList();
   visualization_msgs::MarkerArray GetLandmarkPosesList();
   visualization_msgs::MarkerArray GetConstraintList();
-  nav_msgs::Path GetGlobalNodePoses(bool only_active_and_connected_trajectories);
-  void SetOptimizedNodePosesCallback(
-      OptimizedNodePosesCallback optimized_node_poses_callback) LOCKS_EXCLUDED(optimized_node_poses_callback_mutex_);
-  void OnlyActiveAndConnectedTrajectoriesForOptimizedNodePosesCallback(
-      bool only_active_and_connected_trajectories_for_optimized_node_poses_callback) LOCKS_EXCLUDED(optimized_node_poses_callback_mutex_);
+  OptimizationResults GetOptimizationResults() LOCKS_EXCLUDED(mutex_);
+  ::cartographer::common::Time GetOptimizationResultsLastNodeTime() LOCKS_EXCLUDED(mutex_);
+  std::string GetTrajectoryTrackingFrame(int trajectory_id);
+
+  void AllTrajectoriesInOptimizationResults(bool all_trajectories_in_optimization_results) LOCKS_EXCLUDED(mutex_);
 
   SensorBridge* sensor_bridge(int trajectory_id);
 
@@ -118,17 +125,16 @@ class MapBuilderBridge {
                          ::cartographer::sensor::RangeData range_data_in_local)
       LOCKS_EXCLUDED(mutex_);
 
-  void OnGlobalSlamOptimization() LOCKS_EXCLUDED(mutex_);
+  void CacheOptimizationResults() LOCKS_EXCLUDED(mutex_);
+  void OnGlobalSlamOptimization();
 
   absl::Mutex mutex_;
   const NodeOptions node_options_;
   std::unordered_map<int,
                      std::shared_ptr<const LocalTrajectoryData::LocalSlamData>>
       local_slam_data_ GUARDED_BY(mutex_);
-
-  absl::Mutex optimized_node_poses_callback_mutex_;
-  OptimizedNodePosesCallback optimized_node_poses_callback_ GUARDED_BY(optimized_node_poses_callback_mutex_);
-  bool only_active_and_connected_trajectories_for_optimized_node_poses_callback_ GUARDED_BY(optimized_node_poses_callback_mutex_);
+  bool all_trajectories_in_optimization_results_ GUARDED_BY(mutex_);
+  OptimizationResults optimization_results_ GUARDED_BY(mutex_);
 
   std::map<int, std::unique_ptr<::cartographer::transform::Rigid3d>> published_to_tracking_cache_;
   std::unique_ptr<cartographer::mapping::MapBuilderInterface> map_builder_;

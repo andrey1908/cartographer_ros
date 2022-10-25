@@ -56,6 +56,9 @@ namespace cartographer_ros {
 namespace carto = ::cartographer;
 
 using carto::transform::Rigid3d;
+using carto::mapping::MapById;
+using carto::mapping::NodeId;
+using carto::mapping::TrajectoryNodePose;
 using TrajectoryState =
     ::cartographer::mapping::PoseGraphInterface::TrajectoryState;
 
@@ -102,8 +105,7 @@ Node::Node(
     std::unique_ptr<cartographer::mapping::MapBuilderInterface> map_builder,
     tf2_ros::Buffer* const tf_buffer, const bool collect_metrics)
     : node_options_(node_options),
-      map_builder_bridge_(node_options_, std::move(map_builder), tf_buffer),
-      last_optimized_node_poses_counter_(0) {
+      map_builder_bridge_(node_options_, std::move(map_builder), tf_buffer) {
   absl::MutexLock lock(&mutex_);
   if (collect_metrics) {
     metrics_registry_ = absl::make_unique<metrics::FamilyFactory>();
@@ -133,9 +135,9 @@ Node::Node(
         node_handle_.advertise<::nav_msgs::Odometry>(
             kTrackedGlobalOdometryTopic, kLatestOnlyPublisherQueueSize);
   }
-  optimized_node_poses_publisher_ =
-      node_handle_.advertise<::nav_msgs::Path>(
-          kOptimizedNodePosesTopic, kLatestOnlyPublisherQueueSize);
+  optimization_results_publisher_ =
+      node_handle_.advertise<optimization_results_msgs::OptimizationResults>(
+          kOptimizationResultsTopic, kLatestOnlyPublisherQueueSize);
   service_servers_.push_back(node_handle_.advertiseService(
       kSubmapQueryServiceName, &Node::HandleSubmapQuery, this));
   service_servers_.push_back(node_handle_.advertiseService(
@@ -173,11 +175,7 @@ Node::Node(
       ::ros::WallDuration(kConstraintPublishPeriodSec),
       &Node::PublishConstraintList, this));
 
-  map_builder_bridge_.OnlyActiveAndConnectedTrajectoriesForOptimizedNodePosesCallback(true);
-  map_builder_bridge_.SetOptimizedNodePosesCallback(
-      [this](const nav_msgs::Path& optimized_node_poses) {
-        PublishOptimizedNodePoses(optimized_node_poses);
-      });
+  map_builder_bridge_.AllTrajectoriesInOptimizationResults(false);
 }
 
 Node::~Node() { FinishAllTrajectories(); }
@@ -363,20 +361,33 @@ void Node::PublishLocalTrajectoryData(const ::ros::TimerEvent& timer_event) {
       }
     }
   }
-}
 
-void Node::PublishOptimizedNodePoses(nav_msgs::Path optimized_node_poses) {
-  {
-    absl::MutexLock lock(&mutex_);
-    if (last_published_tf_stamps_.size() > 0) {
-      for (const auto& entry : last_published_tf_stamps_) {
-        if (optimized_node_poses.header.stamp < entry.second) {
-          optimized_node_poses.header.stamp = entry.second;
-        }
-      }
+  ros::Time optimization_results_stamp_ = ToRos(map_builder_bridge_.GetOptimizationResultsLastNodeTime());
+  if (optimization_results_stamp_ > last_published_optimization_results_stamp_) {
+    MapBuilderBridge::OptimizationResults optimization_results = map_builder_bridge_.GetOptimizationResults();
+    optimization_results_msgs::OptimizationResults optimization_results_msg;
+    optimization_results_msg.header.stamp = optimization_results_stamp_;
+    std::map<int, int> trajectory_id_to_optimized_trajectory;
+    for (int trajectory_id : optimization_results.node_poses.trajectory_ids()) {
+      trajectory_id_to_optimized_trajectory[trajectory_id] = optimization_results_msg.trajectories.size();
+      optimization_results_msg.trajectories.emplace_back();
     }
+    for (const auto& node_id_data : optimization_results.node_poses) {
+      geometry_msgs::TransformStamped pose;
+      pose.header.frame_id = node_options_.map_frame;
+      pose.header.stamp = ToRos(node_id_data.data.constant_pose_data->time);
+      pose.child_frame_id = map_builder_bridge_.GetTrajectoryTrackingFrame(node_id_data.id.trajectory_id);
+      pose.transform = ToGeometryMsgTransform(node_id_data.data.global_pose);
+      optimization_results_msg.trajectories[trajectory_id_to_optimized_trajectory.at(node_id_data.id.trajectory_id)].poses.push_back(pose);
+    }
+    if (optimization_results.odometry_correction.has_value()) {
+      optimization_results_msg.odometry_correction.header.frame_id = node_options_.map_frame;
+      optimization_results_msg.odometry_correction.child_frame_id = optimization_results.odom_frame;
+      optimization_results_msg.odometry_correction.transform = ToGeometryMsgTransform(*optimization_results.odometry_correction);
+    }
+    last_published_optimization_results_stamp_ = optimization_results_stamp_;
+    optimization_results_publisher_.publish(optimization_results_msg);
   }
-  optimized_node_poses_publisher_.publish(optimized_node_poses);
 }
 
 void Node::PublishTrajectoryNodeList(
@@ -811,7 +822,7 @@ void Node::RunFinalOptimization() {
   }
   // Assuming we are not adding new data anymore, the final optimization
   // can be performed without holding the mutex.
-  map_builder_bridge_.OnlyActiveAndConnectedTrajectoriesForOptimizedNodePosesCallback(false);
+  map_builder_bridge_.AllTrajectoriesInOptimizationResults(true);
   map_builder_bridge_.RunFinalOptimization();
 }
 
