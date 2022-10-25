@@ -363,7 +363,7 @@ void Node::PublishLocalTrajectoryData(const ::ros::TimerEvent& timer_event) {
   }
 
   ros::Time optimization_results_stamp = ToRos(map_builder_bridge_.GetOptimizationResultsLastNodeTime());
-  if (optimization_results_stamp > last_published_optimization_results_stamp_) {
+  if (optimization_results_stamp != last_published_optimization_results_stamp_) {
     MapBuilderBridge::OptimizationResults optimization_results = map_builder_bridge_.GetOptimizationResults();
     optimization_results_msgs::OptimizationResults optimization_results_msg;
     optimization_results_msg.header.stamp = optimization_results_stamp;
