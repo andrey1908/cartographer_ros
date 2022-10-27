@@ -49,13 +49,13 @@ DEFINE_string(
     bag_filenames, "",
     "Comma-separated list of bags to process. One bag per trajectory. "
     "Any combination of simultaneous and sequential bags is supported.");
-DEFINE_bool(create_new_trajectory_for_each_rosbag, true, "Create "
+DEFINE_bool(create_new_trajectory_for_each_rosbag, false, "Create "
     "a new trajectory for each rosbag. Otherwise all rosbags are processed in "
     "one trajectory.");
 DEFINE_string(urdf_filenames, "",
               "Comma-separated list of one or more URDF files that contain "
               "static links for the sensor configuration(s).");
-DEFINE_bool(use_bag_transforms, true,
+DEFINE_bool(read_bag_transforms, true,
             "Whether to read and use transforms from bags.");
 DEFINE_bool(read_transforms_from_tf, true,
             "Read transforms from /tf and /tf_static.");
@@ -234,7 +234,7 @@ void RunOfflineNode(const MapBuilderFactory& map_builder_factory) {
         // transforms into 'tf_buffer' via this lambda.
         [&tf_buffer](const rosbag::MessageInstance& msg) {
           if (msg.isType<tf2_msgs::TFMessage>()) {
-            if (FLAGS_use_bag_transforms) {
+            if (FLAGS_read_bag_transforms) {
               const auto tf_message = msg.instantiate<tf2_msgs::TFMessage>();
               for (const auto& transform : tf_message->transforms) {
                 try {
