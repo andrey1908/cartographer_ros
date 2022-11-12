@@ -114,8 +114,6 @@ class MapBuilderBridge {
   ::cartographer::common::Time GetOptimizationResultsLastNodeTime() LOCKS_EXCLUDED(mutex_);
   std::string GetTrajectoryTrackingFrame(int trajectory_id);
 
-  void AllTrajectoriesInOptimizationResults(bool all_trajectories_in_optimization_results) LOCKS_EXCLUDED(mutex_);
-
   SensorBridge* sensor_bridge(int trajectory_id);
 
  private:
@@ -133,7 +131,6 @@ class MapBuilderBridge {
   std::unordered_map<int,
                      std::shared_ptr<const LocalTrajectoryData::LocalSlamData>>
       local_slam_data_ GUARDED_BY(mutex_);
-  bool all_trajectories_in_optimization_results_ GUARDED_BY(mutex_);
   OptimizationResults optimization_results_ GUARDED_BY(mutex_);
 
   std::map<int, std::unique_ptr<::cartographer::transform::Rigid3d>> published_to_tracking_cache_;

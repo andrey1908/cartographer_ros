@@ -77,6 +77,7 @@ void Run() {
   OnShutDown = [&node](){
     node.FinishAllTrajectories();
     node.RunFinalOptimization();
+    ::ros::WallDuration(0.2).sleep();
     if (!FLAGS_save_state_filename.empty()) {
       node.SerializeState(FLAGS_save_state_filename,
                           true /* include_unfinished_submaps */);

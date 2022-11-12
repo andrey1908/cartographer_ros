@@ -107,7 +107,6 @@ MapBuilderBridge::MapBuilderBridge(
     std::unique_ptr<cartographer::mapping::MapBuilderInterface> map_builder,
     tf2_ros::Buffer* const tf_buffer)
     : node_options_(node_options),
-      all_trajectories_in_optimization_results_(true),
       map_builder_(std::move(map_builder)),
       tf_buffer_(tf_buffer) {
   map_builder_->pose_graph()->SetGlobalSlamOptimizationCallback(
@@ -572,11 +571,6 @@ std::string MapBuilderBridge::GetTrajectoryTrackingFrame(int trajectory_id) {
   return trajectory_options_.at(trajectory_id).tracking_frame;
 }
 
-void MapBuilderBridge::AllTrajectoriesInOptimizationResults(bool all_trajectories_in_optimization_results) {
-  absl::MutexLock lock(&mutex_);
-  all_trajectories_in_optimization_results_ = all_trajectories_in_optimization_results;
-}
-
 SensorBridge* MapBuilderBridge::sensor_bridge(const int trajectory_id) {
   return sensor_bridges_.at(trajectory_id).get();
 }
@@ -594,12 +588,9 @@ void MapBuilderBridge::OnLocalSlamResult(
 }
 
 void MapBuilderBridge::CacheOptimizationResults() {
-  bool use_all_trajectories;
-  {
-    absl::MutexLock lock(&mutex_);
-    use_all_trajectories = all_trajectories_in_optimization_results_;
-  }
-
+  bool use_all_trajectories =
+      !node_options_.optimization_results_only_connected_trajectories &&
+      !node_options_.optimization_results_only_recently_connected_trajectories;
   MapById<NodeId, TrajectoryNodePose> node_poses = map_builder_->pose_graph()->GetTrajectoryNodePoses();
   int active_trajectory_id = -1;
   std::set<int> trajectories_to_use;
@@ -617,18 +608,24 @@ void MapBuilderBridge::CacheOptimizationResults() {
       }
     }
     auto global_constraint_search_after_n_seconds =
-        ::cartographer::common::FromSeconds(node_options_.map_builder_options.pose_graph_options().global_constraint_search_after_n_seconds());
+        ::cartographer::common::FromSeconds(
+            node_options_.map_builder_options.pose_graph_options().global_constraint_search_after_n_seconds());
     for (const auto& trajectory_id_state : trajectory_states) {
       const int trajectory_id = trajectory_id_state.first;
       if (trajectories_to_use.count(trajectory_id)) {
         continue;
       }
-      for (int trajectory_in_use : trajectories_to_use) {
-        if (map_builder_->pose_graph()->TrajectoriesTransitivelyConnected(trajectory_id, trajectory_in_use) &&
-            map_builder_->pose_graph()->TrajectoriesLastConnectionTime(trajectory_id, trajectory_in_use) +
-                global_constraint_search_after_n_seconds >
-                std::max(std::prev(node_poses.EndOfTrajectory(trajectory_id))->data.constant_pose_data->time,
-                         std::prev(node_poses.EndOfTrajectory(trajectory_in_use))->data.constant_pose_data->time)) {
+      for (int trajectory_to_use : trajectories_to_use) {
+        bool connected =
+            map_builder_->pose_graph()->TrajectoriesTransitivelyConnected(trajectory_id, trajectory_to_use);
+        auto last_connection_time =
+            map_builder_->pose_graph()->TrajectoriesLastConnectionTime(trajectory_id, trajectory_to_use);
+        auto latest_node = std::max(
+            std::prev(node_poses.EndOfTrajectory(trajectory_id))->data.constant_pose_data->time,
+            std::prev(node_poses.EndOfTrajectory(trajectory_to_use))->data.constant_pose_data->time);
+        if (connected &&
+            (node_options_.optimization_results_only_connected_trajectories ||
+              last_connection_time + global_constraint_search_after_n_seconds > latest_node)) {
           trajectories_to_use.insert(trajectory_id);
           break;
         }

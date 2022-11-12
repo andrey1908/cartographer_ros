@@ -52,6 +52,16 @@ NodeOptions CreateNodeOptions(
     options.use_pose_extrapolator =
         lua_parameter_dictionary->GetBool("use_pose_extrapolator");
   }
+  if (lua_parameter_dictionary->HasKey("optimization_results_only_connected_trajectories")) {
+    options.optimization_results_only_connected_trajectories =
+        lua_parameter_dictionary->GetBool("optimization_results_only_connected_trajectories");
+  }
+  if (lua_parameter_dictionary->HasKey("optimization_results_only_recently_connected_trajectories")) {
+    options.optimization_results_only_recently_connected_trajectories =
+        lua_parameter_dictionary->GetBool("optimization_results_only_recently_connected_trajectories");
+  }
+  CHECK(!options.optimization_results_only_connected_trajectories ||
+        !options.optimization_results_only_recently_connected_trajectories);
   return options;
 }
 

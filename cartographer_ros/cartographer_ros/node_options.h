@@ -38,6 +38,8 @@ struct NodeOptions {
   bool publish_to_tf = true;
   bool publish_tracked_pose = false;
   bool use_pose_extrapolator = true;
+  bool optimization_results_only_connected_trajectories = false;
+  bool optimization_results_only_recently_connected_trajectories = true;
 };
 
 NodeOptions CreateNodeOptions(

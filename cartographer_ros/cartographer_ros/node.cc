@@ -174,8 +174,6 @@ Node::Node(
   wall_timers_.push_back(node_handle_.createWallTimer(
       ::ros::WallDuration(kConstraintPublishPeriodSec),
       &Node::PublishConstraintList, this));
-
-  map_builder_bridge_.AllTrajectoriesInOptimizationResults(false);
 }
 
 Node::~Node() { FinishAllTrajectories(); }
@@ -829,7 +827,6 @@ void Node::RunFinalOptimization() {
   }
   // Assuming we are not adding new data anymore, the final optimization
   // can be performed without holding the mutex.
-  map_builder_bridge_.AllTrajectoriesInOptimizationResults(true);
   map_builder_bridge_.RunFinalOptimization();
 }
 
