@@ -45,16 +45,6 @@ DEFINE_string(
 namespace cartographer_ros {
 namespace {
 
-std::function<void()> OnShutDown;
-
-void SigIntHandler(int signal){
-  std::cout << "Start shutting down..." << std::endl;
-  OnShutDown();
-  std::cout << "All shut down" << std::endl;
-  ::ros::shutdown();
-  std::cout << "Ros is shut down" << std::endl;
-}
-
 void Run() {
   constexpr double kTfBufferCacheTimeInSeconds = 10.;
   tf2_ros::Buffer tf_buffer{::ros::Duration(kTfBufferCacheTimeInSeconds)};
@@ -77,24 +67,15 @@ void Run() {
     node.StartTrajectoryWithDefaultTopics(trajectory_options);
   }
 
-  OnShutDown = [&node](){
-    node.FinishAllTrajectories();
-    std::cout << "Finished all trajectories" << std::endl;
-    node.RunFinalOptimization();
-    std::cout << "Finished final optimization" << std::endl;
-    ::ros::WallDuration(0.2).sleep();
-    std::cout << "Slept a while" << std::endl;
-    if (!FLAGS_save_state_filename.empty()) {
-      std::cout << "Saving map..." << std::endl;
-      node.SerializeState(FLAGS_save_state_filename,
-                          true /* include_unfinished_submaps */);
-      std::cout << "Saved map" << std::endl;
-    }
-  };
-  std::signal(SIGINT, SigIntHandler);
-
   ::ros::spin();
-  std::cout << "Finished spinning" << std::endl;
+
+  node.FinishAllTrajectories();
+  node.RunFinalOptimization();
+
+  if (!FLAGS_save_state_filename.empty()) {
+    node.SerializeState(FLAGS_save_state_filename,
+                        true /* include_unfinished_submaps */);
+  }
 }
 
 }  // namespace
@@ -107,7 +88,7 @@ int main(int argc, char** argv) {
   CHECK(!FLAGS_configuration_filename.empty())
       << "-configuration_filename is missing.";
 
-  ::ros::init(argc, argv, "cartographer_node", ros::init_options::NoSigintHandler);
+  ::ros::init(argc, argv, "cartographer_node");
   ::ros::start();
 
   cartographer_ros::ScopedRosLogSink ros_log_sink;
