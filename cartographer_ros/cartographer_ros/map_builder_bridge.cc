@@ -623,9 +623,10 @@ void MapBuilderBridge::CacheOptimizationResults() {
         auto latest_node = std::max(
             std::prev(node_poses.EndOfTrajectory(trajectory_id))->data.constant_pose_data->time,
             std::prev(node_poses.EndOfTrajectory(trajectory_to_use))->data.constant_pose_data->time);
+        bool recently_connected =
+            (last_connection_time + global_constraint_search_after_n_seconds > latest_node);
         if (connected &&
-            (node_options_.optimization_results_only_connected_trajectories ||
-              last_connection_time + global_constraint_search_after_n_seconds > latest_node)) {
+            (node_options_.optimization_results_only_connected_trajectories || recently_connected)) {
           trajectories_to_use.insert(trajectory_id);
           break;
         }
