@@ -48,11 +48,11 @@ namespace {
 std::function<void()> OnShutDown;
 
 void SigIntHandler(int signal){
-  LOG(INFO) << "Start shutting down..." << std::endl;
+  std::cout << "Start shutting down..." << std::endl;
   OnShutDown();
-  LOG(INFO) << "All shut down" << std::endl;
+  std::cout << "All shut down" << std::endl;
   ::ros::shutdown();
-  LOG(INFO) << "Ros is shut down" << std::endl;
+  std::cout << "Ros is shut down" << std::endl;
 }
 
 void Run() {
@@ -79,22 +79,22 @@ void Run() {
 
   OnShutDown = [&node](){
     node.FinishAllTrajectories();
-    LOG(INFO) << "Finished all trajectories" << std::endl;
+    std::cout << "Finished all trajectories" << std::endl;
     node.RunFinalOptimization();
-    LOG(INFO) << "Finished final optimization" << std::endl;
+    std::cout << "Finished final optimization" << std::endl;
     ::ros::WallDuration(0.2).sleep();
-    LOG(INFO) << "Slept a while" << std::endl;
+    std::cout << "Slept a while" << std::endl;
     if (!FLAGS_save_state_filename.empty()) {
-      LOG(INFO) << "Saving map..." << std::endl;
+      std::cout << "Saving map..." << std::endl;
       node.SerializeState(FLAGS_save_state_filename,
                           true /* include_unfinished_submaps */);
-      LOG(INFO) << "Saved map" << std::endl;
+      std::cout << "Saved map" << std::endl;
     }
   };
   std::signal(SIGINT, SigIntHandler);
 
   ::ros::spin();
-  LOG(INFO) << "Finished spinning" << std::endl;
+  std::cout << "Finished spinning" << std::endl;
 }
 
 }  // namespace
