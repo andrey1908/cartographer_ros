@@ -40,6 +40,7 @@ struct NodeOptions {
   bool use_pose_extrapolator = true;
   bool optimization_results_only_connected_trajectories = false;
   bool optimization_results_only_recently_connected_trajectories = true;
+  bool log_trajectories_connection_time = false;
 };
 
 NodeOptions CreateNodeOptions(

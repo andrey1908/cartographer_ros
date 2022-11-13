@@ -62,6 +62,10 @@ NodeOptions CreateNodeOptions(
   }
   CHECK(!options.optimization_results_only_connected_trajectories ||
         !options.optimization_results_only_recently_connected_trajectories);
+  if (lua_parameter_dictionary->HasKey("log_trajectories_connection_time")) {
+    options.log_trajectories_connection_time =
+        lua_parameter_dictionary->GetBool("log_trajectories_connection_time");
+  }
   return options;
 }
 
