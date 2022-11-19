@@ -50,15 +50,15 @@ void pbstream_combine(const std::string& pbstream_filename_1,
   
   // load maps
   cartographer::io::ProtoStreamReader map_reader_1(pbstream_filename_1);
-  std::vector<cartographer::mapping::proto::RosTrajectoryOptions> ros_trajectory_options_1;
+  std::vector<cartographer::mapping::proto::TrajectoryRosOptions> trajectory_ros_options_1;
   std::map<int, int> trajectory_remapping_1 =
-      map_builder->LoadState(&map_reader_1, load_frozen_state_1, &ros_trajectory_options_1);
+      map_builder->LoadState(&map_reader_1, load_frozen_state_1, &trajectory_ros_options_1);
   CHECK(trajectory_remapping_1.size() == 1);
 
   cartographer::io::ProtoStreamReader map_reader_2(pbstream_filename_2);
-  std::vector<cartographer::mapping::proto::RosTrajectoryOptions> ros_trajectory_options_2;
+  std::vector<cartographer::mapping::proto::TrajectoryRosOptions> trajectory_ros_options_2;
   std::map<int, int> trajectory_remapping_2 =
-      map_builder->LoadState(&map_reader_2, false, &ros_trajectory_options_2);
+      map_builder->LoadState(&map_reader_2, false, &trajectory_ros_options_2);
   CHECK(trajectory_remapping_2.size() == 1);
 
   // find global constraint
