@@ -364,14 +364,6 @@ void Node::PublishLocalTrajectoryData(const ::ros::TimerEvent& timer_event) {
   if (optimization_results_stamp != last_optimization_results_stamp_) {
     MapBuilderBridge::OptimizationResults optimization_results = map_builder_bridge_.GetOptimizationResults();
     optimization_results_msgs::OptimizationResults optimization_results_msg;
-    optimization_results_msg.header.stamp = optimization_results_stamp;
-    if (optimization_results_msg.header.stamp == ros::Time()) {
-      for (const auto& entry : last_published_tf_stamps_) {
-        if (entry.second > optimization_results_msg.header.stamp) {
-          optimization_results_msg.header.stamp = entry.second;
-        }
-      }
-    }
     std::map<int, int> trajectory_id_to_optimized_trajectory;
     for (int trajectory_id : optimization_results.node_poses.trajectory_ids()) {
       trajectory_id_to_optimized_trajectory[trajectory_id] = optimization_results_msg.trajectories.size();
