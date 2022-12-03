@@ -54,9 +54,7 @@ void Run() {
   std::tie(node_options, trajectory_options) = LoadOptions(FLAGS_configuration_filename);
 
   auto map_builder =
-      cartographer::mapping::CreateMapBuilder(node_options.map_builder_options,
-          trajectory_options.trajectory_builder_options.trajectory_builder_2d_options().submaps_options().num_range_data(),
-          trajectory_options.trajectory_builder_options.trajectory_builder_3d_options().submaps_options().num_range_data());
+      cartographer::mapping::CreateMapBuilder(node_options.map_builder_options);
   Node node(node_options, std::move(map_builder), &tf_buffer,
             FLAGS_collect_metrics);
   if (!FLAGS_load_state_filename.empty()) {

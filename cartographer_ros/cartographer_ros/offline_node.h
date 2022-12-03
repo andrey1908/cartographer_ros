@@ -29,7 +29,7 @@ namespace cartographer_ros {
 
 using MapBuilderFactory =
     std::function<std::unique_ptr<::cartographer::mapping::MapBuilderInterface>(
-        const ::cartographer::mapping::proto::MapBuilderOptions&, int, int)>;
+        const ::cartographer::mapping::proto::MapBuilderOptions&)>;
 
 void RunOfflineNode(const MapBuilderFactory& map_builder_factory);
 

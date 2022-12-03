@@ -44,9 +44,7 @@ void pbstream_combine(const std::string& pbstream_filename_1,
   TrajectoryOptions trajectory_options;
   std::tie(node_options, trajectory_options) = LoadOptions(config_filename);
   auto map_builder =
-      cartographer::mapping::CreateMapBuilder(node_options.map_builder_options,
-          trajectory_options.trajectory_builder_options.trajectory_builder_2d_options().submaps_options().num_range_data(),
-          trajectory_options.trajectory_builder_options.trajectory_builder_3d_options().submaps_options().num_range_data());
+      cartographer::mapping::CreateMapBuilder(node_options.map_builder_options);
   
   // load maps
   cartographer::io::ProtoStreamReader map_reader_1(pbstream_filename_1);
