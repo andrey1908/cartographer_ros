@@ -101,10 +101,10 @@ google_binary(pbstream_trajectories_to_rosbag
   pbstream_trajectories_to_rosbag_main.cc
 )
 
-google_binary(pbstream_combine
-  SRCS
-  pbstream_combine_main.cc
-)
+# google_binary(pbstream_combine
+#   SRCS
+#   pbstream_combine_main.cc
+# )
 
 google_binary(cartographer_dev_pbstream_trajectories_to_rosbag
   SRCS
