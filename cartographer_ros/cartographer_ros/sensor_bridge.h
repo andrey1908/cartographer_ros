@@ -65,11 +65,14 @@ class SensorBridge {
   void HandleImuMessage(const std::string& sensor_id,
                         const sensor_msgs::Imu::ConstPtr& msg);
   void HandleLaserScanMessage(const std::string& sensor_id,
+                              bool ignore_point_timestamps,
                               const sensor_msgs::LaserScan::ConstPtr& msg);
   void HandleMultiEchoLaserScanMessage(
       const std::string& sensor_id,
+      bool ignore_point_timestamps,
       const sensor_msgs::MultiEchoLaserScan::ConstPtr& msg);
   void HandlePointCloud2Message(const std::string& sensor_id,
+                                bool ignore_point_timestamps,
                                 const sensor_msgs::PointCloud2::ConstPtr& msg);
 
   const TfBridge& tf_bridge() const;

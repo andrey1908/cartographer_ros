@@ -104,11 +104,14 @@ class Node {
   void HandleImuMessage(int trajectory_id, const std::string& sensor_id,
                         const sensor_msgs::Imu::ConstPtr& msg);
   void HandleLaserScanMessage(int trajectory_id, const std::string& sensor_id,
+                              bool ignore_point_timestamps,
                               const sensor_msgs::LaserScan::ConstPtr& msg);
   void HandleMultiEchoLaserScanMessage(
       int trajectory_id, const std::string& sensor_id,
+      bool ignore_point_timestamps,
       const sensor_msgs::MultiEchoLaserScan::ConstPtr& msg);
   void HandlePointCloud2Message(int trajectory_id, const std::string& sensor_id,
+                                bool ignore_point_timestamps,
                                 const sensor_msgs::PointCloud2::ConstPtr& msg);
 
   // Serializes the complete Node state.

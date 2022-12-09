@@ -329,18 +329,21 @@ void RunOfflineNode(const MapBuilderFactory& map_builder_factory) {
       const std::string& sensor_id = it->second.id;
       if (msg.isType<sensor_msgs::LaserScan>()) {
         node.HandleLaserScanMessage(trajectory_id, sensor_id,
+                                    bag_trajectory_options.at(bag_index).ignore_point_timestamps,
                                     msg.instantiate<sensor_msgs::LaserScan>());
         ros::WallDuration(FLAGS_sleep_ms / 1000).sleep();
       }
       if (msg.isType<sensor_msgs::MultiEchoLaserScan>()) {
         node.HandleMultiEchoLaserScanMessage(
             trajectory_id, sensor_id,
+            bag_trajectory_options.at(bag_index).ignore_point_timestamps,
             msg.instantiate<sensor_msgs::MultiEchoLaserScan>());
         ros::WallDuration(FLAGS_sleep_ms / 1000).sleep();
       }
       if (msg.isType<sensor_msgs::PointCloud2>()) {
         node.HandlePointCloud2Message(
             trajectory_id, sensor_id,
+            bag_trajectory_options.at(bag_index).ignore_point_timestamps,
             msg.instantiate<sensor_msgs::PointCloud2>());
         ros::WallDuration(FLAGS_sleep_ms / 1000).sleep();
       }

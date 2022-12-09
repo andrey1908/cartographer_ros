@@ -40,6 +40,7 @@ struct TrajectoryOptions {
   int num_multi_echo_laser_scans;
   int num_subdivisions_per_laser_scan;
   int num_point_clouds;
+  bool ignore_point_timestamps = false;
   double rangefinder_sampling_ratio;
   double odometry_sampling_ratio;
   double fixed_frame_pose_sampling_ratio;

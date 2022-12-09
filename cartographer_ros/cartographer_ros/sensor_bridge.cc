@@ -154,28 +154,35 @@ void SensorBridge::HandleImuMessage(const std::string& sensor_id,
 }
 
 void SensorBridge::HandleLaserScanMessage(
-    const std::string& sensor_id, const sensor_msgs::LaserScan::ConstPtr& msg) {
+    const std::string& sensor_id,
+    bool ignore_point_timestamps,
+    const sensor_msgs::LaserScan::ConstPtr& msg) {
   carto::sensor::PointCloudWithIntensities point_cloud;
   carto::common::Time time;
-  std::tie(point_cloud, time) = ToPointCloudWithIntensities(*msg);
+  std::tie(point_cloud, time) =
+      ToPointCloudWithIntensities(*msg, ignore_point_timestamps);
   HandleLaserScan(sensor_id, time, msg->header.frame_id, point_cloud);
 }
 
 void SensorBridge::HandleMultiEchoLaserScanMessage(
     const std::string& sensor_id,
+    bool ignore_point_timestamps,
     const sensor_msgs::MultiEchoLaserScan::ConstPtr& msg) {
   carto::sensor::PointCloudWithIntensities point_cloud;
   carto::common::Time time;
-  std::tie(point_cloud, time) = ToPointCloudWithIntensities(*msg);
+  std::tie(point_cloud, time) =
+      ToPointCloudWithIntensities(*msg, ignore_point_timestamps);
   HandleLaserScan(sensor_id, time, msg->header.frame_id, point_cloud);
 }
 
 void SensorBridge::HandlePointCloud2Message(
     const std::string& sensor_id,
+    bool ignore_point_timestamps,
     const sensor_msgs::PointCloud2::ConstPtr& msg) {
   carto::sensor::PointCloudWithIntensities point_cloud;
   carto::common::Time time;
-  std::tie(point_cloud, time) = ToPointCloudWithIntensities(*msg);
+  std::tie(point_cloud, time) =
+      ToPointCloudWithIntensities(*msg, ignore_point_timestamps);
   HandleRangefinder(sensor_id, time, msg->header.frame_id, point_cloud.points);
 }
 

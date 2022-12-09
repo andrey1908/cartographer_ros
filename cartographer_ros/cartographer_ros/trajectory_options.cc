@@ -66,6 +66,10 @@ TrajectoryOptions CreateTrajectoryOptions(
           "num_subdivisions_per_laser_scan");
   options.num_point_clouds =
       lua_parameter_dictionary->GetNonNegativeInt("num_point_clouds");
+  if (lua_parameter_dictionary->HasKey("ignore_point_timestamps")) {
+    options.ignore_point_timestamps =
+        lua_parameter_dictionary->GetBool("ignore_point_timestamps");
+  }
   options.rangefinder_sampling_ratio =
       lua_parameter_dictionary->GetDouble("rangefinder_sampling_ratio");
   options.odometry_sampling_ratio =

@@ -215,7 +215,7 @@ class RangeDataChecker {
                                RangeChecksum* range_checksum,
                                cartographer::common::Time* from,
                                cartographer::common::Time* to) {
-    auto point_cloud_time = ToPointCloudWithIntensities(message);
+    auto point_cloud_time = ToPointCloudWithIntensities(message, false /* ignore_point_timestamps */);
     const cartographer::sensor::TimedPointCloud& point_cloud =
         std::get<0>(point_cloud_time).points;
     *to = std::get<1>(point_cloud_time);

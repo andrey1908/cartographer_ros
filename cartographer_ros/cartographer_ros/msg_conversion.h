@@ -51,15 +51,15 @@ geometry_msgs::Point ToGeometryMsgPoint(const Eigen::Vector3d& vector3d);
 // the fourth component of each point relative to `Time`.
 std::tuple<::cartographer::sensor::PointCloudWithIntensities,
            ::cartographer::common::Time>
-ToPointCloudWithIntensities(const sensor_msgs::LaserScan& msg);
+ToPointCloudWithIntensities(const sensor_msgs::LaserScan& msg, bool ignore_point_timestamps);
 
 std::tuple<::cartographer::sensor::PointCloudWithIntensities,
            ::cartographer::common::Time>
-ToPointCloudWithIntensities(const sensor_msgs::MultiEchoLaserScan& msg);
+ToPointCloudWithIntensities(const sensor_msgs::MultiEchoLaserScan& msg, bool ignore_point_timestamps);
 
 std::tuple<::cartographer::sensor::PointCloudWithIntensities,
            ::cartographer::common::Time>
-ToPointCloudWithIntensities(const sensor_msgs::PointCloud2& msg);
+ToPointCloudWithIntensities(const sensor_msgs::PointCloud2& msg, bool ignore_point_timestamps);
 
 ::cartographer::sensor::LandmarkData ToLandmarkData(
     const cartographer_ros_msgs::LandmarkList& landmark_list);

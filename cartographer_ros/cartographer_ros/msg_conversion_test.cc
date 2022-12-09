@@ -49,7 +49,7 @@ TEST(MsgConversion, LaserScanToPointCloud) {
   laser_scan.range_max = 10.f;
 
   const auto point_cloud =
-      std::get<0>(ToPointCloudWithIntensities(laser_scan)).points;
+      std::get<0>(ToPointCloudWithIntensities(laser_scan, false /* ignore_point_timestamps */)).points;
   EXPECT_TRUE(
       point_cloud[0].position.isApprox(Eigen::Vector3f(1.f, 0.f, 0.f), kEps));
   EXPECT_TRUE(point_cloud[1].position.isApprox(
@@ -86,7 +86,7 @@ TEST(MsgConversion, LaserScanToPointCloudWithInfinityAndNaN) {
   laser_scan.range_max = 10.f;
 
   const auto point_cloud =
-      std::get<0>(ToPointCloudWithIntensities(laser_scan)).points;
+      std::get<0>(ToPointCloudWithIntensities(laser_scan, false /* ignore_point_timestamps */)).points;
   ASSERT_EQ(2, point_cloud.size());
   EXPECT_TRUE(
       point_cloud[0].position.isApprox(Eigen::Vector3f(0.f, 2.f, 0.f), kEps));

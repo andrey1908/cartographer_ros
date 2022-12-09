@@ -133,7 +133,7 @@ float GetFirstEcho(const sensor_msgs::LaserEcho& echo) {
 // For sensor_msgs::LaserScan and sensor_msgs::MultiEchoLaserScan.
 template <typename LaserMessageType>
 std::tuple<PointCloudWithIntensities, ::cartographer::common::Time>
-LaserScanToPointCloudWithIntensities(const LaserMessageType& msg) {
+LaserScanToPointCloudWithIntensities(const LaserMessageType& msg, bool ignore_point_timestamps) {
   CHECK_GE(msg.range_min, 0.f);
   CHECK_GE(msg.range_max, msg.range_min);
   if (msg.angle_increment > 0.f) {
@@ -149,9 +149,15 @@ LaserScanToPointCloudWithIntensities(const LaserMessageType& msg) {
       const float first_echo = GetFirstEcho(echoes);
       if (msg.range_min <= first_echo && first_echo <= msg.range_max) {
         const Eigen::AngleAxisf rotation(angle, Eigen::Vector3f::UnitZ());
+        float time;
+        if (!ignore_point_timestamps) {
+          time = i * msg.time_increment;
+        } else {
+          time = 0.0f;
+        }
         const cartographer::sensor::TimedRangefinderPoint point{
             rotation * (first_echo * Eigen::Vector3f::UnitX()),
-            i * msg.time_increment};
+            time};
         point_cloud.points.push_back(point);
         if (msg.intensities.size() > 0) {
           CHECK_EQ(msg.intensities.size(), msg.ranges.size());
@@ -204,25 +210,25 @@ sensor_msgs::PointCloud2 ToPointCloud2Message(
 
 std::tuple<::cartographer::sensor::PointCloudWithIntensities,
            ::cartographer::common::Time>
-ToPointCloudWithIntensities(const sensor_msgs::LaserScan& msg) {
-  return LaserScanToPointCloudWithIntensities(msg);
+ToPointCloudWithIntensities(const sensor_msgs::LaserScan& msg, bool ignore_point_timestamps) {
+  return LaserScanToPointCloudWithIntensities(msg, ignore_point_timestamps);
 }
 
 std::tuple<::cartographer::sensor::PointCloudWithIntensities,
            ::cartographer::common::Time>
-ToPointCloudWithIntensities(const sensor_msgs::MultiEchoLaserScan& msg) {
-  return LaserScanToPointCloudWithIntensities(msg);
+ToPointCloudWithIntensities(const sensor_msgs::MultiEchoLaserScan& msg, bool ignore_point_timestamps) {
+  return LaserScanToPointCloudWithIntensities(msg, ignore_point_timestamps);
 }
 
 std::tuple<::cartographer::sensor::PointCloudWithIntensities,
            ::cartographer::common::Time>
-ToPointCloudWithIntensities(const sensor_msgs::PointCloud2& msg) {
+ToPointCloudWithIntensities(const sensor_msgs::PointCloud2& msg, bool ignore_point_timestamps) {
   MEASURE_BLOCK_TIME(point_cloud_conversion);
   PointCloudWithIntensities point_cloud;
   // We check for intensity field here to avoid run-time warnings if we pass in
   // a PointCloud2 without intensity.
   if (PointCloud2HasField(msg, "intensity")) {
-    if (PointCloud2HasField(msg, "time")) {
+    if (PointCloud2HasField(msg, "time") && !ignore_point_timestamps) {
       pcl::PointCloud<PointXYZIT> pcl_point_cloud;
       pcl::fromROSMsg(msg, pcl_point_cloud);
       point_cloud.points.reserve(pcl_point_cloud.size());
@@ -245,7 +251,7 @@ ToPointCloudWithIntensities(const sensor_msgs::PointCloud2& msg) {
     }
   } else {
     // If we don't have an intensity field, just copy XYZ and fill in 1.0f.
-    if (PointCloud2HasField(msg, "time")) {
+    if (PointCloud2HasField(msg, "time") && !ignore_point_timestamps) {
       pcl::PointCloud<PointXYZT> pcl_point_cloud;
       pcl::fromROSMsg(msg, pcl_point_cloud);
       point_cloud.points.reserve(pcl_point_cloud.size());
