@@ -280,7 +280,7 @@ void RunOfflineNode(const MapBuilderFactory& map_builder_factory) {
   size_t bags_processed = 0;
   while (playable_bag_multiplexer.IsMessageAvailable()) {
     if (!::ros::ok()) {
-      return;
+      break;
     }
 
     const auto next_msg_tuple = playable_bag_multiplexer.GetNextMessage();
