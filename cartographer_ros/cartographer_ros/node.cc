@@ -70,17 +70,13 @@ template <typename MessageType>
     void (Node::*handler)(int, const std::string&,
                           const typename MessageType::ConstPtr&),
     const int trajectory_id, const std::string& topic,
-    ::ros::NodeHandle* const node_handle, Node* const node,
-    time_measurer::TimeMeasurer* time_measurer_ptr) {
-  CHECK(time_measurer_ptr);
+    ::ros::NodeHandle* const node_handle, Node* const node) {
   return node_handle->subscribe<MessageType>(
       topic, kInfiniteSubscriberQueueSize,
       boost::function<void(const typename MessageType::ConstPtr&)>(
           [node, handler, trajectory_id,
-           topic, time_measurer_ptr](const typename MessageType::ConstPtr& msg) {
-            time_measurer_ptr->StartMeasurement();
+           topic](const typename MessageType::ConstPtr& msg) {
             (node->*handler)(trajectory_id, topic, msg);
-            time_measurer_ptr->StopMeasurement();
           }));
 }
 
@@ -89,18 +85,13 @@ template <typename MessageType>
     void (Node::*handler)(int, const std::string&, bool,
                           const typename MessageType::ConstPtr&),
     const int trajectory_id, const std::string& topic, const bool ignore_point_timestamps,
-    ::ros::NodeHandle* const node_handle, Node* const node,
-    time_measurer::TimeMeasurer* time_measurer_ptr) {
-  CHECK(time_measurer_ptr);
+    ::ros::NodeHandle* const node_handle, Node* const node) {
   return node_handle->subscribe<MessageType>(
       topic, kInfiniteSubscriberQueueSize,
       boost::function<void(const typename MessageType::ConstPtr&)>(
           [node, handler, trajectory_id,
-           topic, ignore_point_timestamps,
-           time_measurer_ptr](const typename MessageType::ConstPtr& msg) {
-            time_measurer_ptr->StartMeasurement();
+           topic, ignore_point_timestamps](const typename MessageType::ConstPtr& msg) {
             (node->*handler)(trajectory_id, topic, ignore_point_timestamps, msg);
-            time_measurer_ptr->StopMeasurement();
           }));
 }
 
@@ -494,14 +485,13 @@ int Node::AddTrajectory(const TrajectoryOptions& options) {
 
 void Node::LaunchSubscribers(const TrajectoryOptions& options,
                              const int trajectory_id) {
-  static time_measurer::TimeMeasurer ros_time_measurer("ros", true);
   for (const std::string& topic :
        ComputeRepeatedTopicNames(kLaserScanTopic, options.num_laser_scans)) {
     subscribers_[trajectory_id].push_back(
         {SubscribeWithHandler<sensor_msgs::LaserScan>(
              &Node::HandleLaserScanMessage, trajectory_id, topic,
              options.ignore_point_timestamps, &node_handle_,
-             this, &ros_time_measurer),
+             this),
          topic});
   }
   for (const std::string& topic : ComputeRepeatedTopicNames(
@@ -510,7 +500,7 @@ void Node::LaunchSubscribers(const TrajectoryOptions& options,
         {SubscribeWithHandler<sensor_msgs::MultiEchoLaserScan>(
              &Node::HandleMultiEchoLaserScanMessage, trajectory_id, topic,
              options.ignore_point_timestamps, &node_handle_,
-             this, &ros_time_measurer),
+             this),
          topic});
   }
   for (const std::string& topic :
@@ -519,7 +509,7 @@ void Node::LaunchSubscribers(const TrajectoryOptions& options,
         {SubscribeWithHandler<sensor_msgs::PointCloud2>(
              &Node::HandlePointCloud2Message, trajectory_id, topic,
              options.ignore_point_timestamps, &node_handle_,
-             this, &ros_time_measurer),
+             this),
          topic});
   }
   if ((node_options_.map_builder_options.use_trajectory_builder_3d() &&
@@ -531,7 +521,7 @@ void Node::LaunchSubscribers(const TrajectoryOptions& options,
     subscribers_[trajectory_id].push_back(
         {SubscribeWithHandler<sensor_msgs::Imu>(&Node::HandleImuMessage,
                                                 trajectory_id, kImuTopic,
-                                                &node_handle_, this, &ros_time_measurer),
+                                                &node_handle_, this),
          kImuTopic});
   }
 
@@ -539,21 +529,21 @@ void Node::LaunchSubscribers(const TrajectoryOptions& options,
     subscribers_[trajectory_id].push_back(
         {SubscribeWithHandler<nav_msgs::Odometry>(&Node::HandleOdometryMessage,
                                                   trajectory_id, kOdometryTopic,
-                                                  &node_handle_, this, &ros_time_measurer),
+                                                  &node_handle_, this),
          kOdometryTopic});
   }
   if (options.use_nav_sat) {
     subscribers_[trajectory_id].push_back(
         {SubscribeWithHandler<sensor_msgs::NavSatFix>(
              &Node::HandleNavSatFixMessage, trajectory_id, kNavSatFixTopic,
-             &node_handle_, this, &ros_time_measurer),
+             &node_handle_, this),
          kNavSatFixTopic});
   }
   if (options.use_landmarks) {
     subscribers_[trajectory_id].push_back(
         {SubscribeWithHandler<cartographer_ros_msgs::LandmarkList>(
              &Node::HandleLandmarkMessage, trajectory_id, kLandmarkTopic,
-             &node_handle_, this, &ros_time_measurer),
+             &node_handle_, this),
          kLandmarkTopic});
   }
 }
@@ -926,6 +916,7 @@ void Node::HandlePointCloud2Message(
     bool ignore_point_timestamps,
     const sensor_msgs::PointCloud2::ConstPtr& msg) {
   absl::MutexLock lock(&mutex_);
+  MEASURE_BLOCK_TIME(PointCloud2Callback);
   if (!sensor_samplers_.at(trajectory_id).rangefinder_sampler.Pulse()) {
     return;
   }
