@@ -106,12 +106,12 @@ class MapBuilderBridge {
   GetTrajectoryStates();
   cartographer_ros_msgs::SubmapList GetSubmapList();
   std::unordered_map<int, LocalTrajectoryData> GetLocalTrajectoryData()
-      LOCKS_EXCLUDED(mutex_);
+      ABSL_LOCKS_EXCLUDED(mutex_);
   visualization_msgs::MarkerArray GetTrajectoryNodeList();
   visualization_msgs::MarkerArray GetLandmarkPosesList();
   visualization_msgs::MarkerArray GetConstraintList();
-  OptimizationResults GetOptimizationResults() LOCKS_EXCLUDED(mutex_);
-  ::cartographer::common::Time GetOptimizationResultsLastNodeTime() LOCKS_EXCLUDED(mutex_);
+  OptimizationResults GetOptimizationResults() ABSL_LOCKS_EXCLUDED(mutex_);
+  ::cartographer::common::Time GetOptimizationResultsLastNodeTime() ABSL_LOCKS_EXCLUDED(mutex_);
   std::string GetTrajectoryTrackingFrame(int trajectory_id);
 
   SensorBridge* sensor_bridge(int trajectory_id);
@@ -121,17 +121,17 @@ class MapBuilderBridge {
                          const ::cartographer::common::Time time,
                          const ::cartographer::transform::Rigid3d local_pose,
                          ::cartographer::sensor::RangeData range_data_in_local)
-      LOCKS_EXCLUDED(mutex_);
+      ABSL_LOCKS_EXCLUDED(mutex_);
 
-  void CacheOptimizationResults() LOCKS_EXCLUDED(mutex_);
+  void CacheOptimizationResults() ABSL_LOCKS_EXCLUDED(mutex_);
   void OnGlobalSlamOptimization();
 
   absl::Mutex mutex_;
   const NodeOptions node_options_;
   std::unordered_map<int,
                      std::shared_ptr<const LocalTrajectoryData::LocalSlamData>>
-      local_slam_data_ GUARDED_BY(mutex_);
-  OptimizationResults optimization_results_ GUARDED_BY(mutex_);
+      local_slam_data_ ABSL_GUARDED_BY(mutex_);
+  OptimizationResults optimization_results_ ABSL_GUARDED_BY(mutex_);
 
   std::map<int, std::unique_ptr<::cartographer::transform::Rigid3d>> published_to_tracking_cache_;
   std::unique_ptr<cartographer::mapping::MapBuilderInterface> map_builder_;

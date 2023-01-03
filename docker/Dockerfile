@@ -63,7 +63,7 @@ RUN PYTHON3_PATH=`which python3` && \
     ln -s $PYTHON3_PATH `dirname $PYTHON3_PATH`/python
 
 # Build and install abseil
-ARG ABSEIL_COMMIT=d902eb869bcfacc1bad14933ed9af4bed006d481
+ARG ABSEIL_COMMIT=6abc1958562c49d797ea23270a355caf5dc39f94
 RUN set -x && \
     tar -zxf abseil-cpp.tar.gz && \
     cd abseil-cpp && \
@@ -134,14 +134,14 @@ RUN set -x && \
         -DCMAKE_BUILD_TYPE=Release"
 
 # Install slam_validation
-ARG SLAM_VALIDATION_COMMIT=b940270d909d67a1023760d4363dee2e0fd6fccf
-RUN set -x && \
-    tar -zxf slam_validation.tar.gz && \
-    cd slam_validation && \
-    git config --global --add safe.directory /context/slam_validation && \
-    git checkout ${SLAM_VALIDATION_COMMIT} && \
-    cd .. && \
-    mv slam_validation /home/${USER}
+# ARG SLAM_VALIDATION_COMMIT=b940270d909d67a1023760d4363dee2e0fd6fccf
+# RUN set -x && \
+#     tar -zxf slam_validation.tar.gz && \
+#     cd slam_validation && \
+#     git config --global --add safe.directory /context/slam_validation && \
+#     git checkout ${SLAM_VALIDATION_COMMIT} && \
+#     cd .. && \
+#     mv slam_validation /home/${USER}
 
 RUN mkdir -p /home/${USER}/catkin_ws/src && \
     chown -R ${UID}:${GID} /home/${USER}

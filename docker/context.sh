@@ -17,8 +17,8 @@ else
     echo "Download docker context to ${PWD}"
 
     echo "Cloning"
-    git clone https://gitlab.com/sdbcs-nio3/itl_mipt/slam/slam_validation.git
-    to_archive slam_validation
+    # git clone https://gitlab.com/sdbcs-nio3/itl_mipt/slam/slam_validation.git
+    # to_archive slam_validation
     git clone https://github.com/abseil/abseil-cpp.git
     to_archive abseil-cpp
     git clone https://ceres-solver.googlesource.com/ceres-solver.git
