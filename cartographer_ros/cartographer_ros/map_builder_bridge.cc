@@ -130,9 +130,9 @@ void MapBuilderBridge::LoadState(const std::string& state_filename,
   std::vector<cartographer::mapping::proto::TrajectoryRosOptions> trajectory_ros_options;
   std::map<int, int> trajectory_remapping =
       map_builder_->LoadState(&stream, load_frozen_state, &trajectory_ros_options);
-  for (const auto& entry : trajectory_ros_options) {
-    int trajectory_id = trajectory_remapping.at(entry.trajectory_id());
-    trajectory_options_[trajectory_id].tracking_frame = entry.tracking_frame();
+  for (const auto& options : trajectory_ros_options) {
+    int trajectory_id = options.trajectory_id();
+    trajectory_options_[trajectory_id].tracking_frame = options.tracking_frame();
   }
 }
 
