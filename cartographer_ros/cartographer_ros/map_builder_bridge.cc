@@ -422,7 +422,7 @@ visualization_msgs::MarkerArray MapBuilderBridge::GetConstraintList() {
     visualization_msgs::Marker *constraint_marker, *residual_marker;
     std_msgs::ColorRGBA color_constraint, color_residual;
     if (constraint.tag ==
-        cartographer::mapping::PoseGraphInterface::Constraint::INTRA_SUBMAP) {
+        cartographer::mapping::Constraint::INTRA_SUBMAP) {
       constraint_marker = &constraint_intra_marker;
       residual_marker = &residual_intra_marker;
       // Color mapping for submaps of various trajectories - add trajectory id
