@@ -102,7 +102,7 @@ class MapBuilderBridge {
       cartographer_ros_msgs::TrajectoryQuery::Response& response);
 
   std::map<int /* trajectory_id */,
-           ::cartographer::mapping::PoseGraphInterface::TrajectoryState>
+           ::cartographer::mapping::TrajectoryState>
   GetTrajectoryStates();
   cartographer_ros_msgs::SubmapList GetSubmapList();
   std::unordered_map<int, LocalTrajectoryData> GetLocalTrajectoryData()

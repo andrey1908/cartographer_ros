@@ -230,7 +230,7 @@ void MapBuilderBridge::HandleSubmapQuery(
   response.status.code = cartographer_ros_msgs::StatusCode::OK;
 }
 
-std::map<int, ::cartographer::mapping::PoseGraphInterface::TrajectoryState>
+std::map<int, ::cartographer::mapping::TrajectoryState>
 MapBuilderBridge::GetTrajectoryStates() {
   auto trajectory_states = map_builder_->pose_graph()->GetTrajectoryStates();
   // Add active trajectories that are not yet in the pose graph, but are e.g.
@@ -238,7 +238,7 @@ MapBuilderBridge::GetTrajectoryStates() {
   for (const auto& sensor_bridge : sensor_bridges_) {
     trajectory_states.insert(std::make_pair(
         sensor_bridge.first,
-        ::cartographer::mapping::PoseGraphInterface::TrajectoryState::ACTIVE));
+        ::cartographer::mapping::TrajectoryState::ACTIVE));
   }
   return trajectory_states;
 }
@@ -541,7 +541,7 @@ void MapBuilderBridge::CacheOptimizationResults() {
   } else {
     const auto& trajectory_states = map_builder_->pose_graph()->GetTrajectoryStates();
     for (const auto& trajectory_id_state : trajectory_states) {
-      if (trajectory_id_state.second == ::cartographer::mapping::PoseGraphInterface::TrajectoryState::ACTIVE) {
+      if (trajectory_id_state.second == ::cartographer::mapping::TrajectoryState::ACTIVE) {
         CHECK(active_trajectory_id == -1) << "Only one active trajectory is allowed";
         active_trajectory_id = trajectory_id_state.first;
         trajectories_to_use.insert(trajectory_id_state.first);

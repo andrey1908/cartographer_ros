@@ -60,7 +60,7 @@ using carto::mapping::MapById;
 using carto::mapping::NodeId;
 using carto::mapping::TrajectoryNodePose;
 using TrajectoryState =
-    ::cartographer::mapping::PoseGraphInterface::TrajectoryState;
+    ::cartographer::mapping::TrajectoryState;
 
 namespace {
 // Subscribes to the 'topic' for 'trajectory_id' using the 'node_handle' and
@@ -573,7 +573,7 @@ bool Node::ValidateTopicNames(const TrajectoryOptions& options) {
 
 cartographer_ros_msgs::StatusResponse Node::TrajectoryStateToStatus(
     const int trajectory_id, const std::set<TrajectoryState>& valid_states) {
-  const auto trajectory_states = map_builder_bridge_.GetTrajectoryStates();
+  const auto& trajectory_states = map_builder_bridge_.GetTrajectoryStates();
   cartographer_ros_msgs::StatusResponse status_response;
 
   const auto it = trajectory_states.find(trajectory_id);
@@ -729,7 +729,7 @@ bool Node::HandleGetTrajectoryStates(
     ::cartographer_ros_msgs::GetTrajectoryStates::Request& request,
     ::cartographer_ros_msgs::GetTrajectoryStates::Response& response) {
   using TrajectoryState =
-      ::cartographer::mapping::PoseGraphInterface::TrajectoryState;
+      ::cartographer::mapping::TrajectoryState;
   absl::MutexLock lock(&mutex_);
   response.status.code = ::cartographer_ros_msgs::StatusCode::OK;
   response.trajectory_states.header.stamp = ros::Time::now();
