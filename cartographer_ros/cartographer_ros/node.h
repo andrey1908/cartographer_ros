@@ -178,7 +178,7 @@ class Node {
   cartographer_ros_msgs::StatusResponse TrajectoryStateToStatus(
       int trajectory_id,
       const std::set<
-          cartographer::mapping::TrajectoryState>&
+          cartographer::mapping::TrajectoryState::State>&
           valid_states);
   const NodeOptions node_options_;
 

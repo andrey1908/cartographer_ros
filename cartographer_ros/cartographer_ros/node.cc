@@ -96,14 +96,14 @@ template <typename MessageType>
 }
 
 std::string TrajectoryStateToString(const TrajectoryState trajectory_state) {
-  switch (trajectory_state) {
-    case TrajectoryState::ACTIVE:
+  switch (trajectory_state.state) {
+    case TrajectoryState::State::ACTIVE:
       return "ACTIVE";
-    case TrajectoryState::FINISHED:
+    case TrajectoryState::State::FINISHED:
       return "FINISHED";
-    case TrajectoryState::FROZEN:
+    case TrajectoryState::State::FROZEN:
       return "FROZEN";
-    case TrajectoryState::DELETED:
+    case TrajectoryState::State::DELETED:
       return "DELETED";
   }
   return "";
@@ -205,8 +205,8 @@ bool Node::HandleTrajectoryQuery(
   absl::MutexLock lock(&mutex_);
   response.status = TrajectoryStateToStatus(
       request.trajectory_id,
-      {TrajectoryState::ACTIVE, TrajectoryState::FINISHED,
-       TrajectoryState::FROZEN} /* valid states */);
+      {TrajectoryState::State::ACTIVE, TrajectoryState::State::FINISHED,
+       TrajectoryState::State::FROZEN} /* valid states */);
   if (response.status.code != cartographer_ros_msgs::StatusCode::OK) {
     LOG(ERROR) << "Can't query trajectory from pose graph: "
                << response.status.message;
@@ -572,7 +572,7 @@ bool Node::ValidateTopicNames(const TrajectoryOptions& options) {
 }
 
 cartographer_ros_msgs::StatusResponse Node::TrajectoryStateToStatus(
-    const int trajectory_id, const std::set<TrajectoryState>& valid_states) {
+    const int trajectory_id, const std::set<TrajectoryState::State>& valid_states) {
   const auto& trajectory_states = map_builder_bridge_.GetTrajectoryStates();
   cartographer_ros_msgs::StatusResponse status_response;
 
@@ -588,7 +588,7 @@ cartographer_ros_msgs::StatusResponse Node::TrajectoryStateToStatus(
       absl::StrCat("Trajectory ", trajectory_id, " is in '",
                    TrajectoryStateToString(it->second), "' state.");
   status_response.code =
-      valid_states.count(it->second)
+      valid_states.count(it->second.state)
           ? cartographer_ros_msgs::StatusCode::OK
           : cartographer_ros_msgs::StatusCode::INVALID_ARGUMENT;
   return status_response;
@@ -607,7 +607,7 @@ cartographer_ros_msgs::StatusResponse Node::FinishTrajectoryUnderLock(
 
   // First, check if we can actually finish the trajectory.
   status_response = TrajectoryStateToStatus(
-      trajectory_id, {TrajectoryState::ACTIVE} /* valid states */);
+      trajectory_id, {TrajectoryState::State::ACTIVE} /* valid states */);
   if (status_response.code != cartographer_ros_msgs::StatusCode::OK) {
     LOG(ERROR) << "Can't finish trajectory: " << status_response.message;
     return status_response;
@@ -651,8 +651,8 @@ bool Node::HandleStartTrajectory(
     // Check if the requested trajectory for the relative initial pose exists.
     response.status = TrajectoryStateToStatus(
         request.relative_to_trajectory_id,
-        {TrajectoryState::ACTIVE, TrajectoryState::FROZEN,
-         TrajectoryState::FINISHED} /* valid states */);
+        {TrajectoryState::State::ACTIVE, TrajectoryState::State::FROZEN,
+         TrajectoryState::State::FINISHED} /* valid states */);
     if (response.status.code != cartographer_ros_msgs::StatusCode::OK) {
       LOG(ERROR) << "Can't start a trajectory with initial pose: "
                  << response.status.message;
@@ -735,20 +735,20 @@ bool Node::HandleGetTrajectoryStates(
   response.trajectory_states.header.stamp = ros::Time::now();
   for (const auto& entry : map_builder_bridge_.GetTrajectoryStates()) {
     response.trajectory_states.trajectory_id.push_back(entry.first);
-    switch (entry.second) {
-      case TrajectoryState::ACTIVE:
+    switch (entry.second.state) {
+      case TrajectoryState::State::ACTIVE:
         response.trajectory_states.trajectory_state.push_back(
             ::cartographer_ros_msgs::TrajectoryStates::ACTIVE);
         break;
-      case TrajectoryState::FINISHED:
+      case TrajectoryState::State::FINISHED:
         response.trajectory_states.trajectory_state.push_back(
             ::cartographer_ros_msgs::TrajectoryStates::FINISHED);
         break;
-      case TrajectoryState::FROZEN:
+      case TrajectoryState::State::FROZEN:
         response.trajectory_states.trajectory_state.push_back(
             ::cartographer_ros_msgs::TrajectoryStates::FROZEN);
         break;
-      case TrajectoryState::DELETED:
+      case TrajectoryState::State::DELETED:
         response.trajectory_states.trajectory_state.push_back(
             ::cartographer_ros_msgs::TrajectoryStates::DELETED);
         break;
@@ -801,7 +801,7 @@ bool Node::HandleReadMetrics(
 void Node::FinishAllTrajectories() {
   absl::MutexLock lock(&mutex_);
   for (const auto& entry : map_builder_bridge_.GetTrajectoryStates()) {
-    if (entry.second == TrajectoryState::ACTIVE) {
+    if (entry.second.state == TrajectoryState::State::ACTIVE) {
       const int trajectory_id = entry.first;
       CHECK_EQ(FinishTrajectoryUnderLock(trajectory_id).code,
                cartographer_ros_msgs::StatusCode::OK);
@@ -819,7 +819,7 @@ void Node::RunFinalOptimization() {
   {
     for (const auto& entry : map_builder_bridge_.GetTrajectoryStates()) {
       const int trajectory_id = entry.first;
-      if (entry.second == TrajectoryState::ACTIVE) {
+      if (entry.second.state == TrajectoryState::State::ACTIVE) {
         LOG(WARNING)
             << "Can't run final optimization if there are one or more active "
                "trajectories. Trying to finish trajectory with ID "

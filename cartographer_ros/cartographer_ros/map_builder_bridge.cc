@@ -238,7 +238,7 @@ MapBuilderBridge::GetTrajectoryStates() {
   for (const auto& sensor_bridge : sensor_bridges_) {
     trajectory_states.insert(std::make_pair(
         sensor_bridge.first,
-        ::cartographer::mapping::TrajectoryState::ACTIVE));
+        ::cartographer::mapping::TrajectoryState()));
   }
   return trajectory_states;
 }
@@ -541,7 +541,8 @@ void MapBuilderBridge::CacheOptimizationResults() {
   } else {
     const auto& trajectory_states = map_builder_->pose_graph()->GetTrajectoryStates();
     for (const auto& trajectory_id_state : trajectory_states) {
-      if (trajectory_id_state.second == ::cartographer::mapping::TrajectoryState::ACTIVE) {
+      if (trajectory_id_state.second.state ==
+            ::cartographer::mapping::TrajectoryState::State::ACTIVE) {
         CHECK(active_trajectory_id == -1) << "Only one active trajectory is allowed";
         active_trajectory_id = trajectory_id_state.first;
         trajectories_to_use.insert(trajectory_id_state.first);
