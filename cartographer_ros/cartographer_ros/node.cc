@@ -229,12 +229,10 @@ void Node::AddExtrapolator(const int trajectory_id,
                            const TrajectoryOptions& options) {
   constexpr double kExtrapolationEstimationTimeSec = 0.001;  // 1 ms
   CHECK(extrapolators_.count(trajectory_id) == 0);
+  CHECK(node_options_.map_builder_options.use_trajectory_builder_3d());
   const double gravity_time_constant =
-      node_options_.map_builder_options.use_trajectory_builder_3d()
-          ? options.trajectory_builder_options.trajectory_builder_3d_options()
-                .imu_gravity_time_constant()
-          : options.trajectory_builder_options.trajectory_builder_2d_options()
-                .imu_gravity_time_constant();
+      options.trajectory_builder_options.trajectory_builder_3d_options()
+          .imu_gravity_time_constant();
   extrapolators_.emplace(
       std::piecewise_construct, std::forward_as_tuple(trajectory_id),
       std::forward_as_tuple(
@@ -446,12 +444,9 @@ Node::ComputeExpectedSensorIds(const TrajectoryOptions& options) const {
        ComputeRepeatedTopicNames(kPointCloud2Topic, options.num_point_clouds)) {
     expected_topics.insert(SensorId{SensorType::RANGE, topic});
   }
-  if ((node_options_.map_builder_options.use_trajectory_builder_3d() &&
+  if (node_options_.map_builder_options.use_trajectory_builder_3d() &&
        options.trajectory_builder_options.trajectory_builder_3d_options()
-           .use_imu_data()) ||
-      (node_options_.map_builder_options.use_trajectory_builder_2d() &&
-       options.trajectory_builder_options.trajectory_builder_2d_options()
-           .use_imu_data())) {
+           .use_imu_data()) {
     expected_topics.insert(SensorId{SensorType::IMU, kImuTopic});
   }
   // Odometry is optional.
@@ -516,12 +511,9 @@ void Node::LaunchSubscribers(const TrajectoryOptions& options,
              this),
          topic});
   }
-  if ((node_options_.map_builder_options.use_trajectory_builder_3d() &&
+  if (node_options_.map_builder_options.use_trajectory_builder_3d() &&
        options.trajectory_builder_options.trajectory_builder_3d_options()
-           .use_imu_data()) ||
-      (node_options_.map_builder_options.use_trajectory_builder_2d() &&
-       options.trajectory_builder_options.trajectory_builder_2d_options()
-           .use_imu_data())) {
+           .use_imu_data()) {
     subscribers_[trajectory_id].push_back(
         {SubscribeWithHandler<sensor_msgs::Imu>(&Node::HandleImuMessage,
                                                 trajectory_id, kImuTopic,
@@ -553,10 +545,6 @@ void Node::LaunchSubscribers(const TrajectoryOptions& options,
 }
 
 bool Node::ValidateTrajectoryOptions(const TrajectoryOptions& options) {
-  if (node_options_.map_builder_options.use_trajectory_builder_2d()) {
-    return options.trajectory_builder_options
-        .has_trajectory_builder_2d_options();
-  }
   if (node_options_.map_builder_options.use_trajectory_builder_3d()) {
     return options.trajectory_builder_options
         .has_trajectory_builder_3d_options();
