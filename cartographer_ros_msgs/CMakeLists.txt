@@ -39,6 +39,8 @@ add_message_files(
     SubmapList.msg
     SubmapTexture.msg
     TrajectoryStates.msg
+    Map.msg
+    MapsData.msg
 )
 
 add_service_files(
@@ -51,6 +53,8 @@ add_service_files(
     SubmapQuery.srv
     TrajectoryQuery.srv
     WriteState.srv
+    GetMapsData.srv
+    MoveTrajectoryToMap.srv
 )
 
 generate_messages(

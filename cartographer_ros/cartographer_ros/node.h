@@ -34,7 +34,9 @@
 #include "cartographer_ros/node_options.h"
 #include "cartographer_ros/trajectory_options.h"
 #include "cartographer_ros_msgs/FinishTrajectory.h"
+#include "cartographer_ros_msgs/MoveTrajectoryToMap.h"
 #include "cartographer_ros_msgs/GetTrajectoryStates.h"
+#include "cartographer_ros_msgs/GetMapsData.h"
 #include "cartographer_ros_msgs/ReadMetrics.h"
 #include "cartographer_ros_msgs/StartTrajectory.h"
 #include "cartographer_ros_msgs/StatusResponse.h"
@@ -138,19 +140,26 @@ class Node {
       cartographer_ros_msgs::SubmapQuery::Request& request,
       cartographer_ros_msgs::SubmapQuery::Response& response);
   bool HandleTrajectoryQuery(
-      ::cartographer_ros_msgs::TrajectoryQuery::Request& request,
-      ::cartographer_ros_msgs::TrajectoryQuery::Response& response);
+      cartographer_ros_msgs::TrajectoryQuery::Request& request,
+      cartographer_ros_msgs::TrajectoryQuery::Response& response);
   bool HandleStartTrajectory(
       cartographer_ros_msgs::StartTrajectory::Request& request,
       cartographer_ros_msgs::StartTrajectory::Response& response);
   bool HandleFinishTrajectory(
       cartographer_ros_msgs::FinishTrajectory::Request& request,
       cartographer_ros_msgs::FinishTrajectory::Response& response);
-  bool HandleWriteState(cartographer_ros_msgs::WriteState::Request& request,
-                        cartographer_ros_msgs::WriteState::Response& response);
+  bool HandleMoveTrajectoryToMap(
+      cartographer_ros_msgs::MoveTrajectoryToMap::Request& request,
+      cartographer_ros_msgs::MoveTrajectoryToMap::Response& response);
+  bool HandleWriteState(
+      cartographer_ros_msgs::WriteState::Request& request,
+      cartographer_ros_msgs::WriteState::Response& response);
   bool HandleGetTrajectoryStates(
-      ::cartographer_ros_msgs::GetTrajectoryStates::Request& request,
-      ::cartographer_ros_msgs::GetTrajectoryStates::Response& response);
+      cartographer_ros_msgs::GetTrajectoryStates::Request& request,
+      cartographer_ros_msgs::GetTrajectoryStates::Response& response);
+  bool HandleGetMapsData(
+      cartographer_ros_msgs::GetMapsData::Request& request,
+      cartographer_ros_msgs::GetMapsData::Response& response);
   bool HandleReadMetrics(
       cartographer_ros_msgs::ReadMetrics::Request& request,
       cartographer_ros_msgs::ReadMetrics::Response& response);

@@ -158,9 +158,13 @@ Node::Node(
   service_servers_.push_back(node_handle_.advertiseService(
       kFinishTrajectoryServiceName, &Node::HandleFinishTrajectory, this));
   service_servers_.push_back(node_handle_.advertiseService(
+      kMoveTrajectoryToMapServiceName, &Node::HandleMoveTrajectoryToMap, this));
+  service_servers_.push_back(node_handle_.advertiseService(
       kWriteStateServiceName, &Node::HandleWriteState, this));
   service_servers_.push_back(node_handle_.advertiseService(
       kGetTrajectoryStatesServiceName, &Node::HandleGetTrajectoryStates, this));
+  service_servers_.push_back(node_handle_.advertiseService(
+      kGetMapsDataServiceName, &Node::HandleGetMapsData, this));
   service_servers_.push_back(node_handle_.advertiseService(
       kReadMetricsServiceName, &Node::HandleReadMetrics, this));
 
@@ -757,11 +761,37 @@ bool Node::HandleGetTrajectoryStates(
   return true;
 }
 
+bool Node::HandleGetMapsData(
+    ::cartographer_ros_msgs::GetMapsData::Request& request,
+    ::cartographer_ros_msgs::GetMapsData::Response& response) {
+  absl::MutexLock lock(&mutex_);
+  std::map<std::string, std::set<int>> maps_data = map_builder_bridge_.GetMapsData();
+  for (const auto& [map_name, trajectory_ids] : maps_data) {
+    response.maps.maps.emplace_back();
+    response.maps.maps.back().map_name = map_name;
+    response.maps.maps.back().trajectory_ids.insert(
+        response.maps.maps.back().trajectory_ids.end(),
+        trajectory_ids.begin(), trajectory_ids.end());
+  }
+  response.status.code = ::cartographer_ros_msgs::StatusCode::OK;
+  response.maps.header.stamp = ros::Time::now();
+  return true;
+}
+
 bool Node::HandleFinishTrajectory(
     ::cartographer_ros_msgs::FinishTrajectory::Request& request,
     ::cartographer_ros_msgs::FinishTrajectory::Response& response) {
   absl::MutexLock lock(&mutex_);
   response.status = FinishTrajectoryUnderLock(request.trajectory_id);
+  return true;
+}
+
+bool Node::HandleMoveTrajectoryToMap(
+    ::cartographer_ros_msgs::MoveTrajectoryToMap::Request& request,
+    ::cartographer_ros_msgs::MoveTrajectoryToMap::Response& response) {
+  absl::MutexLock lock(&mutex_);
+  map_builder_bridge_.MoveTrajectoryToMap(request.trajectory_id, request.map_name);
+  response.status.code = cartographer_ros_msgs::StatusCode::OK;
   return true;
 }
 

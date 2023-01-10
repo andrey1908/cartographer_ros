@@ -174,6 +174,10 @@ void MapBuilderBridge::FinishTrajectory(const int trajectory_id) {
   sensor_bridges_.erase(trajectory_id);
 }
 
+void MapBuilderBridge::MoveTrajectoryToMap(int trajectory_id, const std::string& map_name) {
+  map_builder_->MoveTrajectoryToMap(trajectory_id, map_name);
+}
+
 void MapBuilderBridge::RunFinalOptimization() {
   LOG(INFO) << "Running final trajectory optimization...";
   map_builder_->pose_graph()->RunFinalOptimization();
@@ -241,6 +245,10 @@ MapBuilderBridge::GetTrajectoryStates() {
         ::cartographer::mapping::TrajectoryState()));
   }
   return trajectory_states;
+}
+
+std::map<std::string, std::set<int>> MapBuilderBridge::GetMapsData() {
+  return map_builder_->pose_graph()->GetMapsData();
 }
 
 cartographer_ros_msgs::SubmapList MapBuilderBridge::GetSubmapList() {

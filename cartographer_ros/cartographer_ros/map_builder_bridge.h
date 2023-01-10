@@ -89,6 +89,7 @@ class MapBuilderBridge {
           expected_sensor_ids,
       const TrajectoryOptions& trajectory_options);
   void FinishTrajectory(int trajectory_id);
+  void MoveTrajectoryToMap(int trajectory_id, const std::string& map_name);
   void RunFinalOptimization();
   std::vector<cartographer::mapping::proto::TrajectoryRosOptions> CreateTrajectoryRosOptions();
   bool SerializeState(const std::string& filename,
@@ -104,6 +105,7 @@ class MapBuilderBridge {
   std::map<int /* trajectory_id */,
            ::cartographer::mapping::TrajectoryState>
   GetTrajectoryStates();
+  std::map<std::string, std::set<int>> GetMapsData();
   cartographer_ros_msgs::SubmapList GetSubmapList();
   std::unordered_map<int, LocalTrajectoryData> GetLocalTrajectoryData()
       ABSL_LOCKS_EXCLUDED(mutex_);
