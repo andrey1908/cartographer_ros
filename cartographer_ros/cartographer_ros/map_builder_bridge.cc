@@ -539,7 +539,8 @@ void MapBuilderBridge::CacheOptimizationResults() {
   bool use_all_trajectories =
       !node_options_.optimization_results_only_connected_trajectories &&
       !node_options_.optimization_results_only_recently_connected_trajectories;
-  MapById<NodeId, TrajectoryNodePose> node_poses = map_builder_->pose_graph()->GetTrajectoryNodePoses();
+  MapById<NodeId, TrajectoryNodePose> node_poses =
+      map_builder_->pose_graph()->GetTrajectoryNodePoses();
   int active_trajectory_id = -1;
   std::set<int> trajectories_to_use;
   if (use_all_trajectories) {
@@ -558,17 +559,24 @@ void MapBuilderBridge::CacheOptimizationResults() {
     }
     auto global_constraint_search_after_n_seconds =
         ::cartographer::common::FromSeconds(
-            node_options_.map_builder_options.pose_graph_options().global_constraint_search_after_n_seconds());
+            node_options_.map_builder_options.pose_graph_options().
+                global_constraint_search_after_n_seconds());
     for (const auto& trajectory_id_state : trajectory_states) {
       const int trajectory_id = trajectory_id_state.first;
       if (trajectories_to_use.count(trajectory_id)) {
         continue;
       }
       for (int trajectory_to_use : trajectories_to_use) {
+        if (!map_builder_->pose_graph()->TrajectoriesBelongToTheSameMap(
+                trajectory_id, trajectory_to_use)) {
+          continue;
+        }
         bool connected =
-            map_builder_->pose_graph()->TrajectoriesTransitivelyConnected(trajectory_id, trajectory_to_use);
+            map_builder_->pose_graph()->TrajectoriesTransitivelyConnected(
+                trajectory_id, trajectory_to_use);
         auto last_connection_time =
-            map_builder_->pose_graph()->TrajectoriesLastConnectionTime(trajectory_id, trajectory_to_use);
+            map_builder_->pose_graph()->TrajectoriesLastConnectionTime(
+                trajectory_id, trajectory_to_use);
         auto latest_node = std::max(
             std::prev(node_poses.EndOfTrajectory(trajectory_id))->data.constant_pose_data->time,
             std::prev(node_poses.EndOfTrajectory(trajectory_to_use))->data.constant_pose_data->time);
