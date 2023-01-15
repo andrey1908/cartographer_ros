@@ -91,7 +91,6 @@ class MapBuilderBridge {
   void FinishTrajectory(int trajectory_id);
   void MoveTrajectoryToMap(int trajectory_id, const std::string& map_name);
   void RunFinalOptimization();
-  std::vector<cartographer::mapping::proto::TrajectoryRosOptions> CreateTrajectoryRosOptions();
   bool SerializeState(const std::string& filename,
                       const bool include_unfinished_submaps);
 
