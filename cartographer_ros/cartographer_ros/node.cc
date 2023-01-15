@@ -355,9 +355,11 @@ void Node::PublishLocalTrajectoryData(const ::ros::TimerEvent& timer_event) {
         tracked_pose_publisher_.publish(pose_msg);
 
         ::nav_msgs::Odometry local_odometry_msg;
-        local_odometry_msg.header.frame_id = trajectory_data.trajectory_options.odom_frame;
+        local_odometry_msg.header.frame_id =
+            trajectory_data.trajectory_options.odom_frame;
         local_odometry_msg.header.stamp = stamped_transform.header.stamp;
-        local_odometry_msg.child_frame_id = trajectory_data.trajectory_options.published_frame;
+        local_odometry_msg.child_frame_id =
+            trajectory_data.trajectory_options.published_frame;
         local_odometry_msg.pose.pose = ToGeometryMsgPose(
             tracking_to_local * (*trajectory_data.published_to_tracking));
         tracked_local_odometry_publisher_.publish(local_odometry_msg);
@@ -365,7 +367,8 @@ void Node::PublishLocalTrajectoryData(const ::ros::TimerEvent& timer_event) {
         ::nav_msgs::Odometry global_odometry_msg;
         global_odometry_msg.header.frame_id = node_options_.map_frame;
         global_odometry_msg.header.stamp = stamped_transform.header.stamp;
-        global_odometry_msg.child_frame_id = trajectory_data.trajectory_options.published_frame;
+        global_odometry_msg.child_frame_id =
+            trajectory_data.trajectory_options.published_frame;
         global_odometry_msg.pose.pose = ToGeometryMsgPose(
             tracking_to_map * (*trajectory_data.published_to_tracking));
         tracked_global_odometry_publisher_.publish(global_odometry_msg);
@@ -373,27 +376,41 @@ void Node::PublishLocalTrajectoryData(const ::ros::TimerEvent& timer_event) {
     }
   }
 
-  ros::Time optimization_results_stamp = ToRos(map_builder_bridge_.GetOptimizationResultsLastNodeTime());
+  ros::Time optimization_results_stamp =
+      ToRos(map_builder_bridge_.GetOptimizationResultsLastNodeTime());
   if (optimization_results_stamp != last_optimization_results_stamp_) {
-    MapBuilderBridge::OptimizationResults optimization_results = map_builder_bridge_.GetOptimizationResults();
+    MapBuilderBridge::OptimizationResults optimization_results =
+        map_builder_bridge_.GetOptimizationResults();
     optimization_results_msgs::OptimizationResults optimization_results_msg;
-    std::map<int, int> trajectory_id_to_optimized_trajectory;
+    std::map<int, int> trajectory_id_to_index;
+    trajectory_id_to_index[-1] = -1;
     for (int trajectory_id : optimization_results.node_poses.trajectory_ids()) {
-      trajectory_id_to_optimized_trajectory[trajectory_id] = optimization_results_msg.trajectories.size();
+      trajectory_id_to_index[trajectory_id] =
+          optimization_results_msg.trajectories.size();
       optimization_results_msg.trajectories.emplace_back();
     }
+    optimization_results_msg.active_trajectory_index =
+        trajectory_id_to_index[optimization_results.active_trajectory_id];
+    if (optimization_results.active_trajectory_id != -1) {
+      optimization_results_msg.active_trajectory_child_frame_id =
+          optimization_results.active_trajectory_tracking_frame_id;
+      optimization_results_msg.active_trajectory_odometry_correction.header.frame_id =
+          node_options_.map_frame;
+      optimization_results_msg.active_trajectory_odometry_correction.child_frame_id =
+          optimization_results.active_trajectory_odom_frame_id;
+      optimization_results_msg.active_trajectory_odometry_correction.transform =
+          ToGeometryMsgTransform(
+              optimization_results.active_trajectory_odometry_correction);
+    }
     for (const auto& node_id_data : optimization_results.node_poses) {
-      geometry_msgs::TransformStamped pose;
+      geometry_msgs::PoseStamped pose;
       pose.header.frame_id = node_options_.map_frame;
       pose.header.stamp = ToRos(node_id_data.data.constant_pose_data->time);
-      pose.child_frame_id = map_builder_bridge_.GetTrajectoryTrackingFrame(node_id_data.id.trajectory_id);
-      pose.transform = ToGeometryMsgTransform(node_id_data.data.global_pose);
-      optimization_results_msg.trajectories[trajectory_id_to_optimized_trajectory.at(node_id_data.id.trajectory_id)].global_poses.push_back(pose);
-    }
-    if (optimization_results.active_trajectory_local_to_map.has_value()) {
-      optimization_results_msg.map_to_odom.header.frame_id = node_options_.map_frame;
-      optimization_results_msg.map_to_odom.child_frame_id = optimization_results.active_trajectory_odom_frame;
-      optimization_results_msg.map_to_odom.transform = ToGeometryMsgTransform(*optimization_results.active_trajectory_local_to_map);
+      pose.pose = ToGeometryMsgPose(node_id_data.data.global_pose);
+      int trajectory_index =
+          trajectory_id_to_index.at(node_id_data.id.trajectory_id);
+      optimization_results_msg.trajectories[trajectory_index].
+          global_poses.push_back(pose);
     }
     last_optimization_results_stamp_ = optimization_results_stamp;
     optimization_results_publisher_.publish(optimization_results_msg);

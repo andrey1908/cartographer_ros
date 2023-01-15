@@ -521,26 +521,28 @@ void MapBuilderBridge::CacheOptimizationResults() {
       !node_options_.optimization_results_only_recently_connected_trajectories;
   MapById<NodeId, TrajectoryNodePose> node_poses =
       map_builder_->pose_graph()->GetTrajectoryNodePoses();
+
   int active_trajectory_id = -1;
+  const auto& trajectory_states = map_builder_->pose_graph()->GetTrajectoryStates();
+  for (const auto& trajectory_id_state : trajectory_states) {
+    if (trajectory_id_state.second.state ==
+          ::cartographer::mapping::TrajectoryState::State::ACTIVE) {
+      CHECK(active_trajectory_id == -1) << "Only one active trajectory is allowed";
+      active_trajectory_id = trajectory_id_state.first;
+    }
+  }
+
   std::set<int> trajectories_to_use;
   if (use_all_trajectories) {
     for (int trajectory_id : node_poses.trajectory_ids()) {
       trajectories_to_use.insert(trajectory_id);
     }
-  } else {
-    const auto& trajectory_states = map_builder_->pose_graph()->GetTrajectoryStates();
-    for (const auto& trajectory_id_state : trajectory_states) {
-      if (trajectory_id_state.second.state ==
-            ::cartographer::mapping::TrajectoryState::State::ACTIVE) {
-        CHECK(active_trajectory_id == -1) << "Only one active trajectory is allowed";
-        active_trajectory_id = trajectory_id_state.first;
-        trajectories_to_use.insert(trajectory_id_state.first);
-      }
-    }
+  } else if (active_trajectory_id != -1) {
     auto global_constraint_search_after_n_seconds =
         ::cartographer::common::FromSeconds(
             node_options_.map_builder_options.pose_graph_options().
                 global_constraint_search_after_n_seconds());
+    trajectories_to_use.insert(active_trajectory_id);
     for (const auto& trajectory_id_state : trajectory_states) {
       const int trajectory_id = trajectory_id_state.first;
       if (trajectories_to_use.count(trajectory_id)) {
@@ -589,14 +591,16 @@ void MapBuilderBridge::CacheOptimizationResults() {
   }
 
   absl::MutexLock lock(&mutex_);
-  optimization_results_.node_poses = std::move(node_poses);
+  optimization_results_.active_trajectory_id = active_trajectory_id;
   if (active_trajectory_id != -1) {
-    optimization_results_.active_trajectory_local_to_map = map_builder_->pose_graph()->GetLocalToGlobalTransform(active_trajectory_id);
-    optimization_results_.active_trajectory_odom_frame = trajectory_options_.at(active_trajectory_id).odom_frame;
-  } else {
-    optimization_results_.active_trajectory_local_to_map.reset();
-    optimization_results_.active_trajectory_odom_frame.clear();
+    optimization_results_.active_trajectory_odom_frame_id =
+        trajectory_options_.at(active_trajectory_id).odom_frame;
+    optimization_results_.active_trajectory_tracking_frame_id =
+        trajectory_options_.at(active_trajectory_id).tracking_frame;
+    optimization_results_.active_trajectory_odometry_correction =
+        map_builder_->pose_graph()->GetLocalToGlobalTransform(active_trajectory_id);
   }
+  optimization_results_.node_poses = std::move(node_poses);
 }
 
 void MapBuilderBridge::OnGlobalSlamOptimization() {
