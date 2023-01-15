@@ -392,8 +392,6 @@ void Node::PublishLocalTrajectoryData(const ::ros::TimerEvent& timer_event) {
     optimization_results_msg.active_trajectory_index =
         trajectory_id_to_index[optimization_results.active_trajectory_id];
     if (optimization_results.active_trajectory_id != -1) {
-      optimization_results_msg.active_trajectory_child_frame_id =
-          optimization_results.active_trajectory_tracking_frame_id;
       optimization_results_msg.active_trajectory_odometry_correction.header.frame_id =
           node_options_.map_frame;
       optimization_results_msg.active_trajectory_odometry_correction.child_frame_id =
@@ -401,6 +399,8 @@ void Node::PublishLocalTrajectoryData(const ::ros::TimerEvent& timer_event) {
       optimization_results_msg.active_trajectory_odometry_correction.transform =
           ToGeometryMsgTransform(
               optimization_results.active_trajectory_odometry_correction);
+      optimization_results_msg.active_trajectory_child_frame_id =
+          optimization_results.active_trajectory_tracking_frame_id;
     }
     for (const auto& node_id_data : optimization_results.node_poses) {
       geometry_msgs::PoseStamped pose;
