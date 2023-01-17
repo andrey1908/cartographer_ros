@@ -381,27 +381,30 @@ void Node::PublishLocalTrajectoryData(const ::ros::TimerEvent& timer_event) {
   if (optimization_results_stamp != last_optimization_results_stamp_) {
     MapBuilderBridge::OptimizationResults optimization_results =
         map_builder_bridge_.GetOptimizationResults();
-    optimization_results_msgs::OptimizationResults optimization_results_msg;
+
+    optimization_results_msgs::OptimizationResults msg;
     std::map<int, int> trajectory_id_to_index;
     trajectory_id_to_index[-1] = -1;
     for (int trajectory_id : optimization_results.node_poses.trajectory_ids()) {
       trajectory_id_to_index[trajectory_id] =
-          optimization_results_msg.trajectories.size();
-      optimization_results_msg.trajectories.emplace_back();
+          msg.trajectories.size();
+      msg.trajectories.emplace_back();
     }
-    optimization_results_msg.active_trajectory_index =
+
+    msg.current_trajectory_index =
         trajectory_id_to_index[optimization_results.active_trajectory_id];
     if (optimization_results.active_trajectory_id != -1) {
-      optimization_results_msg.active_trajectory_odometry_correction.header.frame_id =
+      msg.current_global_to_odometry.header.frame_id =
           node_options_.map_frame;
-      optimization_results_msg.active_trajectory_odometry_correction.child_frame_id =
+      msg.current_global_to_odometry.child_frame_id =
           optimization_results.active_trajectory_odom_frame_id;
-      optimization_results_msg.active_trajectory_odometry_correction.transform =
+      msg.current_global_to_odometry.transform =
           ToGeometryMsgTransform(
-              optimization_results.active_trajectory_odometry_correction);
-      optimization_results_msg.active_trajectory_child_frame_id =
+              optimization_results.active_trajectory_map_to_odom);
+      msg.current_child_frame_id =
           optimization_results.active_trajectory_tracking_frame_id;
     }
+
     for (const auto& node_id_data : optimization_results.node_poses) {
       geometry_msgs::PoseStamped pose;
       pose.header.frame_id = node_options_.map_frame;
@@ -409,11 +412,10 @@ void Node::PublishLocalTrajectoryData(const ::ros::TimerEvent& timer_event) {
       pose.pose = ToGeometryMsgPose(node_id_data.data.global_pose);
       int trajectory_index =
           trajectory_id_to_index.at(node_id_data.id.trajectory_id);
-      optimization_results_msg.trajectories[trajectory_index].
-          global_poses.push_back(pose);
+      msg.trajectories[trajectory_index].global_poses.push_back(pose);
     }
     last_optimization_results_stamp_ = optimization_results_stamp;
-    optimization_results_publisher_.publish(optimization_results_msg);
+    optimization_results_publisher_.publish(msg);
   }
 }
 

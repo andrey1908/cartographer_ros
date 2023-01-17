@@ -67,9 +67,9 @@ class MapBuilderBridge {
 
   struct OptimizationResults {
     int active_trajectory_id;
+    ::cartographer::transform::Rigid3d active_trajectory_map_to_odom;
     std::string active_trajectory_odom_frame_id;
     std::string active_trajectory_tracking_frame_id;
-    ::cartographer::transform::Rigid3d active_trajectory_odometry_correction;
     ::cartographer::mapping::MapById<::cartographer::mapping::NodeId, ::cartographer::mapping::TrajectoryNodePose>
         node_poses;
   };

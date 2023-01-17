@@ -35,6 +35,7 @@ using ::cartographer::transform::Rigid3d;
 using ::cartographer::mapping::MapById;
 using ::cartographer::mapping::NodeId;
 using ::cartographer::mapping::TrajectoryNodePose;
+using ::cartographer::mapping::TrajectoryState;
 
 constexpr double kTrajectoryLineStripMarkerScale = 0.07;
 constexpr double kLandmarkMarkerScale = 0.2;
@@ -214,15 +215,14 @@ void MapBuilderBridge::HandleSubmapQuery(
   response.status.code = cartographer_ros_msgs::StatusCode::OK;
 }
 
-std::map<int, ::cartographer::mapping::TrajectoryState>
-MapBuilderBridge::GetTrajectoryStates() {
+std::map<int, TrajectoryState> MapBuilderBridge::GetTrajectoryStates() {
   auto trajectory_states = map_builder_->pose_graph()->GetTrajectoryStates();
   // Add active trajectories that are not yet in the pose graph, but are e.g.
   // waiting for input sensor data and thus already have a sensor bridge.
   for (const auto& sensor_bridge : sensor_bridges_) {
     trajectory_states.insert(std::make_pair(
         sensor_bridge.first,
-        ::cartographer::mapping::TrajectoryState()));
+        TrajectoryState()));
   }
   return trajectory_states;
 }
@@ -521,12 +521,13 @@ void MapBuilderBridge::CacheOptimizationResults() {
       !node_options_.optimization_results_only_recently_connected_trajectories;
   MapById<NodeId, TrajectoryNodePose> node_poses =
       map_builder_->pose_graph()->GetTrajectoryNodePoses();
+  const std::map<int, TrajectoryState>& trajectory_states =
+      map_builder_->pose_graph()->GetTrajectoryStates();
 
   int active_trajectory_id = -1;
-  const auto& trajectory_states = map_builder_->pose_graph()->GetTrajectoryStates();
   for (const auto& trajectory_id_state : trajectory_states) {
     if (trajectory_id_state.second.state ==
-          ::cartographer::mapping::TrajectoryState::State::ACTIVE) {
+          TrajectoryState::State::ACTIVE) {
       CHECK(active_trajectory_id == -1) << "Only one active trajectory is allowed";
       active_trajectory_id = trajectory_id_state.first;
     }
@@ -593,12 +594,12 @@ void MapBuilderBridge::CacheOptimizationResults() {
   absl::MutexLock lock(&mutex_);
   optimization_results_.active_trajectory_id = active_trajectory_id;
   if (active_trajectory_id != -1) {
+    optimization_results_.active_trajectory_map_to_odom =
+        map_builder_->pose_graph()->GetLocalToGlobalTransform(active_trajectory_id);
     optimization_results_.active_trajectory_odom_frame_id =
         trajectory_options_.at(active_trajectory_id).odom_frame;
     optimization_results_.active_trajectory_tracking_frame_id =
         trajectory_options_.at(active_trajectory_id).tracking_frame;
-    optimization_results_.active_trajectory_odometry_correction =
-        map_builder_->pose_graph()->GetLocalToGlobalTransform(active_trajectory_id);
   }
   optimization_results_.node_poses = std::move(node_poses);
 }
