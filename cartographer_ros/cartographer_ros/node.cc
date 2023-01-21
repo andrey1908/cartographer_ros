@@ -414,6 +414,11 @@ void Node::PublishLocalTrajectoryData(const ::ros::TimerEvent& timer_event) {
           trajectory_id_to_index.at(node_id_data.id.trajectory_id);
       msg.trajectories[trajectory_index].global_poses.push_back(pose);
     }
+
+    for (int frozen_trajectory_id : optimization_results.frozen_trajectory_ids) {
+      int trajectory_index = trajectory_id_to_index.at(frozen_trajectory_id);
+      msg.frozen_trajectory_indices.push_back(trajectory_index);
+    }
     last_optimization_results_stamp_ = optimization_results_stamp;
     optimization_results_publisher_.publish(msg);
   }

@@ -579,8 +579,12 @@ void MapBuilderBridge::CacheOptimizationResults() {
   }
 
   std::set<NodeId> nodes_to_remove;
+  std::vector<int> frozen_trajectory_ids;
   for (int trajectory_id : node_poses.trajectory_ids()) {
     if (trajectories_to_use.count(trajectory_id)) {
+      if (trajectory_states.at(trajectory_id).state == TrajectoryState::State::FROZEN) {
+        frozen_trajectory_ids.push_back(trajectory_id);
+      }
       continue;
     }
     for (const auto& node_id_data : node_poses.trajectory(trajectory_id)) {
@@ -602,6 +606,7 @@ void MapBuilderBridge::CacheOptimizationResults() {
         trajectory_options_.at(active_trajectory_id).tracking_frame;
   }
   optimization_results_.node_poses = std::move(node_poses);
+  optimization_results_.frozen_trajectory_ids = std::move(frozen_trajectory_ids);
 }
 
 void MapBuilderBridge::OnGlobalSlamOptimization() {

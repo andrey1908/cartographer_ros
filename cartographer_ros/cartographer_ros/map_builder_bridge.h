@@ -72,6 +72,7 @@ class MapBuilderBridge {
     std::string active_trajectory_tracking_frame_id;
     ::cartographer::mapping::MapById<::cartographer::mapping::NodeId, ::cartographer::mapping::TrajectoryNodePose>
         node_poses;
+    std::vector<int> frozen_trajectory_ids;
   };
 
   using OptimizedNodePosesCallback = std::function<void(const nav_msgs::Path&)>;
