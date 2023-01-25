@@ -579,11 +579,11 @@ void MapBuilderBridge::CacheOptimizationResults() {
   }
 
   std::set<NodeId> nodes_to_remove;
-  std::vector<int> frozen_trajectory_ids;
+  std::set<int> frozen_trajectory_ids;
   for (int trajectory_id : node_poses.trajectory_ids()) {
     if (trajectories_to_use.count(trajectory_id)) {
       if (trajectory_states.at(trajectory_id).state == TrajectoryState::State::FROZEN) {
-        frozen_trajectory_ids.push_back(trajectory_id);
+        frozen_trajectory_ids.insert(trajectory_id);
       }
       continue;
     }

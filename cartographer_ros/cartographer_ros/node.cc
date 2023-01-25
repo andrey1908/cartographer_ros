@@ -384,25 +384,30 @@ void Node::PublishLocalTrajectoryData(const ::ros::TimerEvent& timer_event) {
 
     optimization_results_msgs::OptimizationResults msg;
     std::map<int, int> trajectory_id_to_index;
-    trajectory_id_to_index[-1] = -1;
     for (int trajectory_id : optimization_results.node_poses.trajectory_ids()) {
       trajectory_id_to_index[trajectory_id] =
           msg.trajectories.size();
       msg.trajectories.emplace_back();
+      auto& trajectory = msg.trajectories.back();
+      bool active = (trajectory_id == optimization_results.active_trajectory_id);
+      bool frozen = optimization_results.frozen_trajectory_ids.count(trajectory_id);
+      CHECK(!(active && frozen));
+      trajectory.active = active;
+      trajectory.frozen = frozen;
+      if (active) {
+        trajectory.child_frame_id =
+            optimization_results.active_trajectory_tracking_frame_id;
+      }
     }
 
-    msg.current_trajectory_index =
-        trajectory_id_to_index[optimization_results.active_trajectory_id];
-    if (optimization_results.active_trajectory_id != -1) {
-      msg.current_global_to_odometry.header.frame_id =
+    if (optimization_results.active_trajectory_id >= 0) {
+      msg.global_to_odometry.header.frame_id =
           node_options_.map_frame;
-      msg.current_global_to_odometry.child_frame_id =
+      msg.global_to_odometry.child_frame_id =
           optimization_results.active_trajectory_odom_frame_id;
-      msg.current_global_to_odometry.transform =
+      msg.global_to_odometry.transform =
           ToGeometryMsgTransform(
               optimization_results.active_trajectory_map_to_odom);
-      msg.current_child_frame_id =
-          optimization_results.active_trajectory_tracking_frame_id;
     }
 
     for (const auto& node_id_data : optimization_results.node_poses) {
@@ -415,10 +420,6 @@ void Node::PublishLocalTrajectoryData(const ::ros::TimerEvent& timer_event) {
       msg.trajectories[trajectory_index].global_poses.push_back(pose);
     }
 
-    for (int frozen_trajectory_id : optimization_results.frozen_trajectory_ids) {
-      int trajectory_index = trajectory_id_to_index.at(frozen_trajectory_id);
-      msg.frozen_trajectory_indices.push_back(trajectory_index);
-    }
     last_optimization_results_stamp_ = optimization_results_stamp;
     optimization_results_publisher_.publish(msg);
   }
