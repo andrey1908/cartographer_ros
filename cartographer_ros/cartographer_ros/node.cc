@@ -408,6 +408,12 @@ void Node::PublishLocalTrajectoryData(const ::ros::TimerEvent& timer_event) {
       msg.global_to_odometry.transform =
           ToGeometryMsgTransform(
               optimization_results.active_trajectory_map_to_odom);
+    } else if (last_published_tf_stamps_.size()) {
+      msg.skip_odometry_upto = std::max_element(
+          last_published_tf_stamps_.begin(), last_published_tf_stamps_.end(),
+          [](const std::pair<int, ros::Time>& a, const std::pair<int, ros::Time>& b) {
+            return a.second < b.second;
+          })->second;
     }
 
     for (const auto& node_id_data : optimization_results.node_poses) {
