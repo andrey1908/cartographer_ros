@@ -66,7 +66,7 @@ class MapBuilderBridge {
   };
 
   struct OptimizationResults {
-    int active_trajectory_id;
+    int active_trajectory_id = 0;
     ::cartographer::transform::Rigid3d active_trajectory_map_to_odom;
     std::string active_trajectory_odom_frame_id;
     std::string active_trajectory_tracking_frame_id;
