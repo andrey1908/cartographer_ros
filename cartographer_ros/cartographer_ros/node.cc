@@ -147,7 +147,7 @@ Node::Node(
             kTrackedGlobalOdometryTopic, kLatestOnlyPublisherQueueSize);
   }
   optimization_results_publisher_ =
-      node_handle_.advertise<optimization_results_msgs::OptimizationResults>(
+      node_handle_.advertise<slam_communication_msgs::OptimizationResults>(
           kOptimizationResultsTopic, kLatestOnlyPublisherQueueSize);
   service_servers_.push_back(node_handle_.advertiseService(
       kSubmapQueryServiceName, &Node::HandleSubmapQuery, this));
@@ -382,7 +382,7 @@ void Node::PublishLocalTrajectoryData(const ::ros::TimerEvent& timer_event) {
     MapBuilderBridge::OptimizationResults optimization_results =
         map_builder_bridge_.GetOptimizationResults();
 
-    optimization_results_msgs::OptimizationResults msg;
+    slam_communication_msgs::OptimizationResults msg;
     std::map<int, int> trajectory_id_to_index;
     for (int trajectory_id : optimization_results.node_poses.trajectory_ids()) {
       trajectory_id_to_index[trajectory_id] =

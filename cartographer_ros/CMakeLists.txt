@@ -32,7 +32,7 @@ set(PACKAGE_DEPENDENCIES
   tf2_ros
   urdf
   visualization_msgs
-  optimization_results_msgs
+  slam_communication_msgs
 )
 
 if(WIN32)

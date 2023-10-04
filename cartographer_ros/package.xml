@@ -64,7 +64,7 @@
   <depend>visualization_msgs</depend>
   
   <depend>time_measurer</depend>
-  <depend>optimization_results_msgs</depend>
+  <depend>slam_communication_msgs</depend>
 
   <test_depend>rosunit</test_depend>
 

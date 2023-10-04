@@ -52,7 +52,7 @@
 #include "sensor_msgs/MultiEchoLaserScan.h"
 #include "sensor_msgs/NavSatFix.h"
 #include "sensor_msgs/PointCloud2.h"
-#include <optimization_results_msgs/OptimizationResults.h>
+#include <slam_communication_msgs/OptimizationResults.h>
 #include "tf2_ros/transform_broadcaster.h"
 
 namespace cartographer_ros {
