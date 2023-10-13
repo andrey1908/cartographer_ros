@@ -39,6 +39,7 @@ constexpr char kTrackedPoseTopic[] = "tracked_pose";
 constexpr char kTrackedLocalOdometryTopic[] = "tracked_local_odometry";
 constexpr char kTrackedGlobalOdometryTopic[] = "tracked_global_odometry";
 constexpr char kOptimizationResultsTopic[] = "optimization_results";
+constexpr char kNodesToRemoveTopic[] = "/nodes_to_remove";
 constexpr char kSubmapQueryServiceName[] = "submap_query";
 constexpr char kTrajectoryQueryServiceName[] = "trajectory_query";
 constexpr char kStartTrajectoryServiceName[] = "start_trajectory";

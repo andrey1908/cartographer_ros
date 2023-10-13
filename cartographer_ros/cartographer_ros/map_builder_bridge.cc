@@ -302,6 +302,11 @@ void MapBuilderBridge::HandleTrajectoryQuery(
       " trajectory nodes from trajectory ", request.trajectory_id, ".");
 }
 
+void MapBuilderBridge::ScheduleNodesToTrim(
+    const std::set<::cartographer::common::Time>& nodes_to_trim) {
+  map_builder_->pose_graph()->ScheduleNodesToTrim(nodes_to_trim);
+}
+
 visualization_msgs::MarkerArray MapBuilderBridge::GetTrajectoryNodeList() {
   visualization_msgs::MarkerArray trajectory_node_list;
   const auto node_poses = map_builder_->pose_graph()->GetTrajectoryNodePoses();

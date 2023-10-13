@@ -53,6 +53,7 @@
 #include "sensor_msgs/NavSatFix.h"
 #include "sensor_msgs/PointCloud2.h"
 #include <slam_communication_msgs/OptimizationResults.h>
+#include <slam_communication_msgs/NodesToRemove.h>
 #include "tf2_ros/transform_broadcaster.h"
 
 namespace cartographer_ros {
@@ -115,6 +116,8 @@ class Node {
   void HandlePointCloud2Message(int trajectory_id, const std::string& sensor_id,
                                 bool ignore_point_timestamps,
                                 const sensor_msgs::PointCloud2::ConstPtr& msg);
+
+  void HandleNodesToRemove(const slam_communication_msgs::NodesToRemove::ConstPtr& msg);
 
   // Serializes the complete Node state.
   void SerializeState(const std::string& filename,
@@ -209,6 +212,7 @@ class Node {
   std::vector<::ros::ServiceServer> service_servers_;
   ::ros::Publisher scan_matched_point_cloud_publisher_;
   ::ros::Publisher optimization_results_publisher_;
+  ::ros::Subscriber nodes_to_remove_subscriber_;
 
   struct TrajectorySensorSamplers {
     TrajectorySensorSamplers(const double rangefinder_sampling_ratio,

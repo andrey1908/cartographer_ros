@@ -149,6 +149,10 @@ Node::Node(
   optimization_results_publisher_ =
       node_handle_.advertise<slam_communication_msgs::OptimizationResults>(
           kOptimizationResultsTopic, kLatestOnlyPublisherQueueSize);
+  nodes_to_remove_subscriber_ =
+      node_handle_.subscribe<slam_communication_msgs::NodesToRemove>(
+          kNodesToRemoveTopic, kInfiniteSubscriberQueueSize,
+              &Node::HandleNodesToRemove, this);
   service_servers_.push_back(node_handle_.advertiseService(
       kSubmapQueryServiceName, &Node::HandleSubmapQuery, this));
   service_servers_.push_back(node_handle_.advertiseService(
@@ -971,6 +975,16 @@ void Node::HandlePointCloud2Message(
   }
   map_builder_bridge_.sensor_bridge(trajectory_id)
       ->HandlePointCloud2Message(sensor_id, ignore_point_timestamps, msg);
+}
+
+void Node::HandleNodesToRemove(
+    const slam_communication_msgs::NodesToRemove::ConstPtr& msg) {
+  std::set<::cartographer::common::Time> nodes_to_trim;
+  for (const ros::Time& stamp : msg->nodes_to_remove) {
+    ::cartographer::common::Time time = FromRos(stamp);
+    nodes_to_trim.insert(nodes_to_trim.end(), time);
+  }
+  map_builder_bridge_.ScheduleNodesToTrim(nodes_to_trim);
 }
 
 void Node::SerializeState(const std::string& filename,
