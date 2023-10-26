@@ -104,6 +104,8 @@ class MapBuilderBridge {
       cartographer_ros_msgs::TrajectoryQuery::Request& request,
       cartographer_ros_msgs::TrajectoryQuery::Response& response);
 
+  void WaitForGlobalSLAM();
+
   void ScheduleNodesToTrim(const std::set<::cartographer::common::Time>& nodes_to_trim);
 
   std::map<int /* trajectory_id */,

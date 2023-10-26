@@ -372,6 +372,8 @@ void RunOfflineNode(const MapBuilderFactory& map_builder_factory) {
         node.FinishTrajectory(trajectory_id);
       }
     }
+
+    node.WaitForGlobalSLAM();
   }
 
   // Ensure the clock is republished after the bag has been finished, during the

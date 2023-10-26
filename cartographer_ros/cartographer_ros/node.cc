@@ -984,7 +984,13 @@ void Node::HandleNodesToRemove(
     ::cartographer::common::Time time = FromRos(stamp);
     nodes_to_trim.insert(nodes_to_trim.end(), time);
   }
+  absl::MutexLock lock(&mutex_);
   map_builder_bridge_.ScheduleNodesToTrim(nodes_to_trim);
+}
+
+void Node::WaitForGlobalSLAM() {
+  absl::MutexLock lock(&mutex_);
+  map_builder_bridge_.WaitForGlobalSLAM();
 }
 
 void Node::SerializeState(const std::string& filename,

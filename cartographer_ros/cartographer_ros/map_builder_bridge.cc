@@ -302,6 +302,10 @@ void MapBuilderBridge::HandleTrajectoryQuery(
       " trajectory nodes from trajectory ", request.trajectory_id, ".");
 }
 
+void MapBuilderBridge::WaitForGlobalSLAM() {
+  map_builder_->pose_graph()->WaitForQueue();
+}
+
 void MapBuilderBridge::ScheduleNodesToTrim(
     const std::set<::cartographer::common::Time>& nodes_to_trim) {
   map_builder_->pose_graph()->ScheduleNodesToTrim(nodes_to_trim);

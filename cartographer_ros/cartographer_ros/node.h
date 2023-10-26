@@ -119,6 +119,8 @@ class Node {
 
   void HandleNodesToRemove(const slam_communication_msgs::NodesToRemove::ConstPtr& msg);
 
+  void WaitForGlobalSLAM();
+
   // Serializes the complete Node state.
   void SerializeState(const std::string& filename,
                       const bool include_unfinished_submaps);
