@@ -173,6 +173,12 @@ void MapBuilderBridge::MoveTrajectoryToMap(int trajectory_id, const std::string&
   map_builder_->MoveTrajectoryToMap(trajectory_id, map_name);
 }
 
+void MapBuilderBridge::ScheduleFalseConstraintsTrimming(
+    double max_rotation_error, double max_translation_error) {
+  map_builder_->pose_graph()->ScheduleFalseConstraintsTrimming(
+      max_rotation_error, max_translation_error);
+}
+
 void MapBuilderBridge::RunFinalOptimization() {
   LOG(INFO) << "Running final trajectory optimization...";
   map_builder_->pose_graph()->RunFinalOptimization();

@@ -69,7 +69,7 @@ DEFINE_string(save_state_filename, "",
               "written before shutdown. If left empty, the filename will be "
               "inferred from the first bagfile's name as: "
               "<bag_filenames[0]>.pbstream");
-DEFINE_bool(keep_running, false,
+DEFINE_bool(keep_running, true,
             "Keep running the offline node after all messages from the bag "
             "have been processed.");
 DEFINE_double(skip_seconds, 0,
@@ -380,6 +380,8 @@ void RunOfflineNode(const MapBuilderFactory& map_builder_factory) {
   // final optimization, serialization, and optional indefinite spinning at the
   // end.
   clock_republish_timer.start();
+  node.RunFinalOptimization();
+  node.ScheduleFalseConstraintsTrimming(15 * (M_PI / 180), 0.5);
   node.RunFinalOptimization();
 
   const std::chrono::time_point<std::chrono::steady_clock> end_time =

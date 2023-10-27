@@ -868,23 +868,27 @@ bool Node::FinishTrajectory(const int trajectory_id) {
          cartographer_ros_msgs::StatusCode::OK;
 }
 
+void Node::ScheduleFalseConstraintsTrimming(
+    double max_rotation_error, double max_translation_error) {
+  absl::MutexLock lock(&mutex_);
+  map_builder_bridge_.ScheduleFalseConstraintsTrimming(
+      max_rotation_error, max_translation_error);
+}
+
 void Node::RunFinalOptimization() {
-  {
-    for (const auto& entry : map_builder_bridge_.GetTrajectoryStates()) {
-      const int trajectory_id = entry.first;
-      if (entry.second.state == TrajectoryState::State::ACTIVE) {
-        LOG(WARNING)
-            << "Can't run final optimization if there are one or more active "
-               "trajectories. Trying to finish trajectory with ID "
-            << std::to_string(trajectory_id) << " now.";
-        CHECK(FinishTrajectory(trajectory_id))
-            << "Failed to finish trajectory with ID "
-            << std::to_string(trajectory_id) << ".";
-      }
+  absl::MutexLock lock(&mutex_);
+  for (const auto& entry : map_builder_bridge_.GetTrajectoryStates()) {
+    const int trajectory_id = entry.first;
+    if (entry.second.state == TrajectoryState::State::ACTIVE) {
+      LOG(WARNING)
+          << "Can't run final optimization if there are one or more active "
+              "trajectories. Trying to finish trajectory with ID "
+          << std::to_string(trajectory_id) << " now.";
+      CHECK(FinishTrajectory(trajectory_id))
+          << "Failed to finish trajectory with ID "
+          << std::to_string(trajectory_id) << ".";
     }
   }
-  // Assuming we are not adding new data anymore, the final optimization
-  // can be performed without holding the mutex.
   map_builder_bridge_.RunFinalOptimization();
 }
 

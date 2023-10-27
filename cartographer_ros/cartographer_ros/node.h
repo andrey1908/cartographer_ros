@@ -75,6 +75,9 @@ class Node {
   // exist or was already finished.
   bool FinishTrajectory(int trajectory_id);
 
+  void ScheduleFalseConstraintsTrimming(
+      double max_rotation_error, double max_translation_error);
+
   // Runs final optimization. All trajectories have to be finished when calling.
   void RunFinalOptimization();
 
