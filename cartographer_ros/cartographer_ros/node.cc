@@ -884,9 +884,10 @@ void Node::RunFinalOptimization() {
           << "Can't run final optimization if there are one or more active "
               "trajectories. Trying to finish trajectory with ID "
           << std::to_string(trajectory_id) << " now.";
-      CHECK(FinishTrajectory(trajectory_id))
-          << "Failed to finish trajectory with ID "
-          << std::to_string(trajectory_id) << ".";
+      CHECK_EQ(FinishTrajectoryUnderLock(trajectory_id).code,
+          cartographer_ros_msgs::StatusCode::OK)
+              << "Failed to finish trajectory with ID "
+              << std::to_string(trajectory_id) << ".";
     }
   }
   map_builder_bridge_.RunFinalOptimization();
