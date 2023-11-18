@@ -63,7 +63,7 @@
   <depend>urdf</depend>
   <depend>visualization_msgs</depend>
   
-  <depend>kas_metrics</depend>
+  <depend>kas_utils_cpp</depend>
   <depend>slam_communication_msgs</depend>
 
   <test_depend>rosunit</test_depend>
