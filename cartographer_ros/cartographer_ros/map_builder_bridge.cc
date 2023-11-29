@@ -572,17 +572,18 @@ void MapBuilderBridge::CacheOptimizationResults() {
         bool connected =
             map_builder_->pose_graph()->TrajectoriesTransitivelyConnected(
                 trajectory_id, trajectory_to_use);
+        auto latest_node_time = std::max(
+            std::prev(node_poses.EndOfTrajectory(trajectory_id))->data.constant_pose_data->time,
+            std::prev(node_poses.EndOfTrajectory(trajectory_to_use))->data.constant_pose_data->time);
         auto last_connection_time =
             map_builder_->pose_graph()->TrajectoriesLastConnectionTime(
                 trajectory_id, trajectory_to_use);
-        auto latest_node = std::max(
-            std::prev(node_poses.EndOfTrajectory(trajectory_id))->data.constant_pose_data->time,
-            std::prev(node_poses.EndOfTrajectory(trajectory_to_use))->data.constant_pose_data->time);
-        bool recently_connected =
-            (last_connection_time + global_constraint_search_after_n_seconds > latest_node);
+        bool recently_connected = connected &&
+            ((global_constraint_search_after_n_seconds < ::cartographer::common::FromSeconds(0.)) ||
+                (latest_node_time - last_connection_time < global_constraint_search_after_n_seconds));
         if (connected && node_options_.log_trajectories_connection_time) {
           LOG(INFO) << "Trajectories (" << trajectory_id << ", " << trajectory_to_use << ") connected " <<
-              ::cartographer::common::ToSeconds(latest_node - last_connection_time) << " seconds ago" << std::endl;
+              ::cartographer::common::ToSeconds(latest_node_time - last_connection_time) << " seconds ago" << std::endl;
         }
         if (connected &&
             (node_options_.optimization_results_only_connected_trajectories || recently_connected)) {
