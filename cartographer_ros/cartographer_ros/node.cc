@@ -116,7 +116,8 @@ Node::Node(
     std::unique_ptr<cartographer::mapping::MapBuilderInterface> map_builder,
     tf2_ros::Buffer* const tf_buffer, const bool collect_metrics)
     : node_options_(node_options),
-      map_builder_bridge_(node_options_, std::move(map_builder), tf_buffer) {
+      map_builder_bridge_(node_options_, std::move(map_builder), tf_buffer),
+      last_optimization_results_counter_(0) {
   absl::MutexLock lock(&mutex_);
   if (collect_metrics) {
     metrics_registry_ = absl::make_unique<metrics::FamilyFactory>();
@@ -380,9 +381,8 @@ void Node::PublishLocalTrajectoryData(const ::ros::TimerEvent& timer_event) {
     }
   }
 
-  ros::Time optimization_results_stamp =
-      ToRos(map_builder_bridge_.GetOptimizationResultsLastNodeTime());
-  if (optimization_results_stamp != last_optimization_results_stamp_) {
+  int optimization_results_counter = map_builder_bridge_.GetOptimizationResultsCounter();
+  if (optimization_results_counter != last_optimization_results_counter_) {
     MapBuilderBridge::OptimizationResults optimization_results =
         map_builder_bridge_.GetOptimizationResults();
 
@@ -430,7 +430,7 @@ void Node::PublishLocalTrajectoryData(const ::ros::TimerEvent& timer_event) {
       msg.trajectories[trajectory_index].global_poses.push_back(pose);
     }
 
-    last_optimization_results_stamp_ = optimization_results_stamp;
+    last_optimization_results_counter_ = optimization_results_counter;
     optimization_results_publisher_.publish(msg);
   }
 }

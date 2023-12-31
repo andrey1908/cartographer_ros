@@ -121,7 +121,7 @@ class MapBuilderBridge {
   visualization_msgs::MarkerArray GetLandmarkPosesList();
   visualization_msgs::MarkerArray GetConstraintList();
   OptimizationResults GetOptimizationResults() ABSL_LOCKS_EXCLUDED(mutex_);
-  ::cartographer::common::Time GetOptimizationResultsLastNodeTime() ABSL_LOCKS_EXCLUDED(mutex_);
+  int GetOptimizationResultsCounter() ABSL_LOCKS_EXCLUDED(mutex_);
   std::string GetTrajectoryTrackingFrame(int trajectory_id);
 
   SensorBridge* sensor_bridge(int trajectory_id);
@@ -142,6 +142,7 @@ class MapBuilderBridge {
                      std::shared_ptr<const LocalTrajectoryData::LocalSlamData>>
       local_slam_data_ ABSL_GUARDED_BY(mutex_);
   OptimizationResults optimization_results_ ABSL_GUARDED_BY(mutex_);
+  int optimization_results_counter_ ABSL_GUARDED_BY(mutex_);
 
   std::map<int, std::unique_ptr<::cartographer::transform::Rigid3d>> published_to_tracking_cache_;
   std::unique_ptr<cartographer::mapping::MapBuilderInterface> map_builder_;

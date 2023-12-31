@@ -108,6 +108,7 @@ MapBuilderBridge::MapBuilderBridge(
     std::unique_ptr<cartographer::mapping::MapBuilderInterface> map_builder,
     tf2_ros::Buffer* const tf_buffer)
     : node_options_(node_options),
+      optimization_results_counter_(0),
       map_builder_(std::move(map_builder)),
       tf_buffer_(tf_buffer) {
   map_builder_->pose_graph()->SetGlobalSlamOptimizationCallback(
@@ -499,12 +500,9 @@ MapBuilderBridge::OptimizationResults MapBuilderBridge::GetOptimizationResults()
   return optimization_results_;
 }
 
-::cartographer::common::Time MapBuilderBridge::GetOptimizationResultsLastNodeTime() {
+int MapBuilderBridge::GetOptimizationResultsCounter() {
   absl::MutexLock lock(&mutex_);
-  if (optimization_results_.node_poses.empty()) {
-    return ::cartographer::common::Time();
-  }
-  return std::prev(optimization_results_.node_poses.end())->data.constant_pose_data->time;
+  return optimization_results_counter_;
 }
 
 std::string MapBuilderBridge::GetTrajectoryTrackingFrame(int trajectory_id) {
@@ -623,6 +621,8 @@ void MapBuilderBridge::CacheOptimizationResults() {
   }
   optimization_results_.node_poses = std::move(node_poses);
   optimization_results_.frozen_trajectory_ids = std::move(frozen_trajectory_ids);
+
+  optimization_results_counter_++;
 }
 
 void MapBuilderBridge::OnGlobalSlamOptimization() {
