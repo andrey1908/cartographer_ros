@@ -405,13 +405,11 @@ void Node::PublishLocalTrajectoryData(const ::ros::TimerEvent& timer_event) {
     }
 
     if (optimization_results.active_trajectory_id >= 0) {
-      msg.global_to_odometry.header.frame_id =
-          node_options_.map_frame;
-      msg.global_to_odometry.child_frame_id =
+      msg.map_to_odometry.header.frame_id = node_options_.map_frame;
+      msg.map_to_odometry.child_frame_id =
           optimization_results.active_trajectory_odom_frame_id;
-      msg.global_to_odometry.transform =
-          ToGeometryMsgTransform(
-              optimization_results.active_trajectory_map_to_odom);
+      msg.map_to_odometry.transform =
+          ToGeometryMsgTransform(optimization_results.active_trajectory_map_to_odom);
     } else if (last_published_tf_stamps_.size()) {
       msg.skip_odometry_upto = std::max_element(
           last_published_tf_stamps_.begin(), last_published_tf_stamps_.end(),
