@@ -276,7 +276,7 @@ MapBuilderBridge::GetLocalTrajectoryData() {
     CHECK_EQ(trajectory_options_.count(trajectory_id), 1);
     local_trajectory_data[trajectory_id] = {
         local_slam_data,
-        map_builder_->pose_graph()->GetLocalToGlobalTransform(trajectory_id),
+        map_builder_->pose_graph()->GetGlobalToLocalTransform(trajectory_id),
         sensor_bridge.tf_bridge().LookupToTracking(
             local_slam_data->time,
             trajectory_options_[trajectory_id].published_frame),
@@ -613,7 +613,7 @@ void MapBuilderBridge::CacheOptimizationResults() {
   optimization_results_.active_trajectory_id = active_trajectory_id;
   if (active_trajectory_id != -1) {
     optimization_results_.active_trajectory_map_to_odom =
-        map_builder_->pose_graph()->GetLocalToGlobalTransform(active_trajectory_id);
+        map_builder_->pose_graph()->GetGlobalToLocalTransform(active_trajectory_id);
     optimization_results_.active_trajectory_odom_frame_id =
         trajectory_options_.at(active_trajectory_id).odom_frame;
     optimization_results_.active_trajectory_tracking_frame_id =
